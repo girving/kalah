@@ -34,13 +34,14 @@ extern int pos_strcmp(position p, char *s);
 extern void write_pq(FILE *f, position p);
 extern void write_p(FILE *f, position p, int s);
 
-// Note:
-//   Values are stored in chars for copying speed.
-//   For hashing purposes, bins are restricted to 31 stones,
-//   i.e., 5 bits.  This allows an entire board to be compressed
-//   into a single 64 bit value, with 4 bits to spare.  Kalahahs
-//   are allowed the full 0-255 8-bit range, since they are not 
-//   included in the hashing.  
+/* Note:
+ *   Values are stored in chars for copying speed.
+ *   For hashing purposes, bins are restricted to 31 stones,
+ *   i.e., 5 bits.  This allows an entire board to be compressed
+ *   into a single 64 bit value, with 4 bits to spare.  Kalahahs
+ *   are allowed the full 0-255 8-bit range, since they are not 
+ *   included in the hashing.  
+ */
 
 #endif
 
