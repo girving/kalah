@@ -39,5 +39,5 @@ crunch.o crunch-s.o generator.o endgame.o : endgame.h
 
 .PHONY: clean
 clean:
-	rm *.o kalah kalah-s generator twiddle
+	rm -f *.o kalah kalah-s generator twiddle
 
