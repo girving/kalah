@@ -1,6 +1,6 @@
-# Makefile for mancala programs
+# Makefile for kalah programs
 # Geoffrey Irving
-# 25jun00
+# 28oct00 
 
 CC = gcc
 CILK = cilk
