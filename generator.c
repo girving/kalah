@@ -61,7 +61,7 @@ void info(int v) {
   int i,j,s;
   if (!v) {
     printf("Database info:\n");
-    printf("  Stones:  %d\n",saved);
+    printf("  Saved:   %d\n",saved);
     printf("  Loaded:  %d\n",stones);
     printf("  Bits:    %d\n",eg->bits);
     printf("  Maxval:  %d\n",maxval);
@@ -136,9 +136,9 @@ int crunch(int n, size_t l, position *p) {
       if (v < r)
         v = r;
       }
-  r = v-1;
-  if (r > maxval) r = maxval;
-  eg_setd(eg,l,r);
+  if (pos_strcmp(*p,"1 3 0 0 0 0 0 0 1 0 0 1 1 0"))
+    printf("Here: v %d\n",v);
+  eg_setd(eg,l,v-1);
   crunched++;
   return v;
   }

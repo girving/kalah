@@ -119,18 +119,18 @@ void reduce_endgame(int n, int b, char *sfile, char *dfile) {
   if (b && h.bits > b)
     nh.bits = b;
   e2.bits = nh.bits;
-  if (n && h.n > n) {
+  if (n && h.n > n)
     nh.n = n;
-    }
-  nh.size = e.ai[n][n] * nh.bits / 8; 
-  fwrite(&h,sizeof(endgame_header),1,d);
+  nh.size = e.ai[nh.n][nh.n] * nh.bits / 8; 
+  fwrite(&nh,sizeof(endgame_header),1,d);
   
   while (h.size) {
     block = h.size > BLOCK ? BLOCK : h.size;
     h.size -= block;
     fread(buf,1,block,s);
-    for (i=0;i<block*8/h.bits;i++)
-      eg_setd(&e2,i,eg_getd(&e,i)); 
+    if (h.bits != nh.bits)
+      for (i=0;i<block*8/h.bits;i++)
+        eg_setd(&e2,i,eg_getd(&e,i)); 
     fwrite(buf,1,block*nh.bits/h.bits,d);
     }
   fclose(s);
