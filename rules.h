@@ -19,10 +19,10 @@ extern void fill_pos(position *p, int n);
 extern int move(position *p, int bin);
 
 static inline int a_rate(position *p, int s) {
-  return s ? p->a[PITS]-p->a[LPIT] : p->a[LPIT]-p->a[PITS]; 
+  return s ? p->a[LPIT]-p->a[PITS] : p->a[PITS]-p->a[LPIT]; 
   }
 static inline int a_bin(position *p, int s, int b) { 
-  return s ? p->a[b] : p->a[b+PITS+1]; 
+  return s ? p->a[b+PITS+1] : p->a[b]; 
   }
 
 static inline int rate(position *p) { return a_rate(p,p->s); }
@@ -30,8 +30,8 @@ static inline int o_rate(position *p) { return a_rate(p,!p->s); }
 static inline int bin(position *p, int b) { return a_bin(p,p->s,b); }
 static inline int o_bin(position *p, int b) { return a_bin(p,!p->s,b); }
 
-extern void printq(FILE *f, position p);
-extern void print(FILE *f, position p);
+extern void write_pq(FILE *f, position p);
+extern void write_p(FILE *f, position p, int s);
 
 // Note:
 //   Values are stored in chars for copying speed.

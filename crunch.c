@@ -9,7 +9,6 @@ endgame* eg = 0;
 
 int stones = 0; 
 int calldepth;
-double start;
 stat_t stat;
 
 void init_stat() {
@@ -19,23 +18,30 @@ void init_stat() {
   stat.eg_lookups = stat.f_cutoffs = 0;
   }
 
-void format_elapsed(char *s, long t) {
-  div_t d = div(t,86400);
-  div_t h = div(d.rem,3600);
-  div_t m = div(h.rem,60);
-  if (d.quot)
-    s += sprintf(s,"%d days, ",d.quot);
-  if (d.quot || h.quot)
-    sprintf(s,"%d:%.2d:%.2d",h.quot,m.quot,m.rem);
-  else if (m.quot)
-    sprintf(s,"%d:%.2d",m.quot,m.rem);
-  else
-    sprintf(s,"%d",m.rem);
+void format_elapsed(char *s, double dt) {
+  long t;
+  div_t d,h,m;
+  if (dt < 60)
+    sprintf(s,"%f",dt);
+  else {
+    t = dt;
+    d = div(t,86400);
+    h = div(d.rem,3600);
+    m = div(h.rem,60);
+    if (d.quot)
+      s += sprintf(s,"%d days, ",d.quot);
+    if (d.quot || h.quot)
+      sprintf(s,"%d:%.2d:%.2d",h.quot,m.quot,m.rem);
+    else if (m.quot)
+      sprintf(s,"%d:%.2d",m.quot,m.rem);
+    else
+      sprintf(s,"%d",m.rem);
+    }
   }
 
 void print_stat(FILE *f, char *p) {
   char t[50];
-  format_elapsed(t,(long)stat.elapsed);
+  format_elapsed(t,stat.elapsed);
   fprintf(f,"%sThinking time:    %s\n",p,t);
   fprintf(f,"%sMaximum depth:    %d\n",p,stat.maxdepth);
   fprintf(f,"%sNodes searched:   %lld\n",p,stat.nodes);
@@ -47,7 +53,13 @@ void print_stat(FILE *f, char *p) {
   fprintf(f,"%sNodes per second: %.lf\n",p,stat.nodes/stat.elapsed);
   }
 
-inline void smallsort(int n, int* r, int* v) {
+static inline double accurate_time() {
+  struct timeval t;
+  gettimeofday(&t,NULL);
+  return t.tv_sec + t.tv_usec / 1000000.0;
+  }
+
+static inline void smallsort(int n, int* r, int* v) {
   register int i,j,tr,tv;
   for (i=1;i<n;i++)
     if (r[i-1] < r[i]) {
@@ -65,7 +77,7 @@ inline void smallsort(int n, int* r, int* v) {
   } 
 
 /* Handle leaf nodes, endgame lookups, futility pruning, and hash lookups */
-inline int peek(position *p, datumaccess *da, int d, int *rd, int a) {
+static inline int peek(position *p, datumaccess *da, int d, int *rd, int a) {
   int r,k,t;
 
   STAT(stat.peeks++);
@@ -164,7 +176,7 @@ int crunch(char *m, position *p, datumaccess *da, int d, int *rd, int a) {
         }
       else {            // peek failed, do some move ordering
         o[n] = i;       
-        if (i == tm)      // isn't this move ordering beautifully simple?
+        if (i == tm)   
           cr[n] = 1000;
         else if (k[i])
           cr[n] = 200 + i; 
@@ -228,30 +240,32 @@ int toplevel(char *m, position *p, int d, int *rd, int a) {
 int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
   int a, td;
   char cm[MAXMVC];
+  double t_s, t_e;
   int r = g;
   int lo = -1000;
   int hi = 1000;
   *rd = 250;
   if (f & SF_VERBOSE) 
-    printf("MTD(f): d %d, g %d, t %.f\n",d,g,time(NULL)-start);
+    printf("MTD(f): d %d, g %d, t %f\n",d,g,stat.elapsed);
 
   do {
     a = (r == lo) ? r : r-1;
+    t_s = accurate_time();  
     r = toplevel(cm,p,d,&td,a);
-     if (td < *rd)
-       *rd = td;
+    t_e = accurate_time();
+    if (td < *rd)
+      *rd = td;
     if (r > a) {
       lo = r;
       strcpy(m,cm);
       }
     else
       hi = r;
+    stat.elapsed += t_e - t_s;
     if (f & SF_VERBOSE) {
-      printf("  %d %d, a %d, d %d, m %s, t %.f\n",lo,hi,a,td,cm,time(NULL)-start);
-      if (f & SF_FLOOD && (d > 15 || f & SF_FULL)) {
-        stat.elapsed = time(NULL) - start;
-        print_stat(stdout,"  ");
-        }
+      printf("  %d %d, a %d, d %d, m %s, t %f\n",lo,hi,a,td,cm,t_e-t_s);
+      if (f & SF_FLOOD)
+        print_stat(stdout,"    ");
       }
     if (f & SF_FULL && f & SF_SINGLE)
       break;
@@ -263,7 +277,6 @@ int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
 
 int solve(char *m, position *p, int d, int *rd, int g, int f) {
   int i,r,jump;
-  start = time(NULL);
 
   /* count total stones */
   stones = 0;
@@ -290,7 +303,6 @@ int solve(char *m, position *p, int d, int *rd, int g, int f) {
       }
     }
 
-  stat.elapsed += time(NULL) - start;
   if (f & SF_STALE) setstale(ha);
 
   return r;

@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
   p.s = 0;
   r = guess;
   m = moves;
-  printq(stdout,p);
+  write_pq(stdout,p);
   while (p.w < 0) {
     r = solve(m,&p,d,&rd,r,flags);
     printf("Move: s %d, m %s, r %d, rd %d\n",p.s,m,r,rd);
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
         *m++ = '-';
         }
       if (game)
-        printq(stdout,p);
+        write_pq(stdout,p);
       } while (*m && d == 200);
     }
 

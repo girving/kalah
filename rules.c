@@ -122,7 +122,7 @@ extern int move(position *ps, register int i) {
   return i;
   }
 
-void printq(FILE *f, position p) {
+void write_pq(FILE *f, position p) {
   int i;
   for (i=0;i<=PITS;i++)
     fprintf(f,"%d ",bin(&p,i)); 
@@ -131,16 +131,16 @@ void printq(FILE *f, position p) {
   putc('\n',f);
   }
 
-void print(FILE *f, position p) {
+void write_p(FILE *f, position p, int s) {
   int i;
   fprintf(f,"  ");
   for (i=0;i<PITS;i++)
-    fprintf(f,"%3d",o_bin(&p,PITS-1-i));
-  fprintf(f,"\n%2d",o_bin(&p,PITS));
-  for (i=0;i<3*PITS;i++)
-    putc(' ',f);
-  fprintf(f,"%3d",bin(&p,PITS));
+    fprintf(f,"%3d",a_bin(&p,1-s,PITS-1-i));
+  fprintf(f,"\n%2d",a_bin(&p,1-s,PITS));
   for (i=0;i<PITS;i++)
-    fprintf(f,"%3d",bin(&p,i));
+    fputs("   ",f);
+  fprintf(f,"%3d\n  ",a_bin(&p,s,PITS));
+  for (i=0;i<PITS;i++)
+    fprintf(f,"%3d",a_bin(&p,s,i));
   putc('\n',f);
   }
