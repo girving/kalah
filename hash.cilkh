@@ -5,6 +5,12 @@
 #ifndef __HASH_H
 #define __HASH_H
 
+#include "elision.h"
+#ifdef CILK
+#include <cilk.h>
+#include <cilk-lib.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h> 
 #include "params.h"
@@ -32,14 +38,16 @@ typedef struct __datum {
 
 typedef struct __datumaccess {
   datum *c;
+#ifdef LOCKING
+  Cilk_lockvar *l;
+#endif
   ub4 b1, b2;
   int ko, br;
   int t, r;
   unsigned char d,m;
   } datumaccess;
 
-extern int da_seta(datumaccess *da, int d, int m, int r);
-static inline void da_sett(datumaccess *d, int t) { d->c->f = t; }
+extern int da_seta(datumaccess *da, int d, int m, int r, int t);
 static inline void da_verify(datumaccess *d);
 
 
@@ -48,6 +56,10 @@ typedef struct __hash {
   long size;       // size of hash table (2^bits)
   long entries;    // number of entries 
   long mask;       // hash mask (size-1)
+
+#ifdef LOCKING
+  Cilk_lockvar l[LOCKSIZE];
+#endif
 
   datum *d;        // hash table 
   } hash;
@@ -66,6 +78,9 @@ extern void ha_lookup(hash *h, datumaccess *da, position *p);
 static inline void da_verify(datumaccess *d) {
   int t;
   if (d->ko) return;
+#ifdef LOCKING
+  Cilk_lock(*d->l);
+#endif
   t = d->c->f;
   if (t && d->c->b1 == d->b1 && d->c->b2 == d->b2) {
     d->t = t & D_TYPE;
@@ -76,6 +91,9 @@ static inline void da_verify(datumaccess *d) {
     }
   else
     d->t = 0;
+#ifdef LOCKING
+  Cilk_unlock(*d->l);
+#endif
   }
 
 #endif

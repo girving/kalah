@@ -14,6 +14,13 @@
 /* Transposition tables: */
 #define LOWDEPTH 3
 
+#ifdef CILK
+#define LOCKBITS 10
+#define LOCKSIZE (1<<LOCKBITS)
+#define LOCKMASK (LOCKSIZE-1)
+//#define LOCKING
+#endif
+
 /* Iterative deepening: */ 
 #define STEPSIZE 3
 #define JUMPDEPTH 30
