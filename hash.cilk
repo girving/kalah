@@ -73,7 +73,7 @@ extern void setstale(hash *h) {
 
 void ha_lookup(hash *h, datumaccess *da, position *p) {
   ub4 k;
-#if HASH == HASH_64 || HASH == ZOBRIST
+#if HASH == 64 || HASH == ZOBRIST
   register ub8 b;
   if (p->s)
     b = packpits(p->a) | ((ub8)packpits(p->a+PITS+1) << 32); 
@@ -87,12 +87,12 @@ void ha_lookup(hash *h, datumaccess *da, position *p) {
     }
 
   da->b = b;
-#if HASH == HASH_64
+#if HASH == 64
   k = mix64(b);
 #else
   k = zobrist(*p);
 #endif
-#elif HASH == HASH_32
+#elif HASH == 32
   register ub4 a,b;
   if (p->s) {
     a = packpits(p->a);

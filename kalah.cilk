@@ -95,7 +95,7 @@ cilk int main(int argc, char **argv) {
   m = moves;
   write_pq(stdout,p);
   while (p.w < 0) {
-    r = spawn solve(m,&p,d,&rd,r,flags);
+    r = spawn solve(m,p,d,&rd,r,flags);
     sync;
     printf("Move: s %d, m %s, r %d, rd %d\n",p.s,m,r,rd);
     if (!game) break;

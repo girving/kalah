@@ -162,14 +162,14 @@ cilk c_res* crunch(c_res* s, int d, int a) {
   n = 0;
   d--;
   s->rd = 250;
-  s->r = -1000;
+  s->r = SCHAR_MIN;
   cutoff = 0;
   tm = s->da.t ? s->da.m : -1;
-  for (i=PITS-1;i>=0;i--)      
+  for (i=PITS-1;i>=0;i--)
     if (bin(s->p,i)) {
       c[i].p = s->p;
       c[i].k = move(&c[i].p,i);
-      r = c[i].k ?  peek(&c[i],d,a) : -peek(&c[i],d,-a-1);
+      r = c[i].k ?  peek(c+i,d,a) : -peek(c+i,d,-a-1);
       if (++c[i].rd > 0) {    // peek sucessful
         if (c[i].rd < s->rd)
           s->rd = c[i].rd;
@@ -288,15 +288,15 @@ cilk int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
   return r;
   }
 
-cilk int solve(char *m, position *p, int d, int *rd, int g, int f) {
+cilk int solve(char *m, position p, int d, int *rd, int g, int f) {
   int i,r,jump;
 
   /* count total stones */
   stones = 0;
   for (i=0;i<TPITS;i++)
-    stones += p->a[i];
+    stones += p.a[i];
 
-  r = (f & SF_GUESS) ? g : rate(*p);
+  r = (f & SF_GUESS) ? g : rate(p);
   jump = (f & SF_JUMP) ? 0 : JUMPDEPTH;
   if (f & SF_FLOOD) f |= SF_VERBOSE;
   *rd = 0;
@@ -308,7 +308,7 @@ cilk int solve(char *m, position *p, int d, int *rd, int g, int f) {
     if (i == d)
       f |= SF_FULL;
 
-    r = spawn mtdf(m,p,i,rd,r,f);
+    r = spawn mtdf(m,&p,i,rd,r,f);
     sync;
 
     if (*rd > i) {

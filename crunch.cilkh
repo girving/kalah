@@ -59,7 +59,7 @@ typedef struct __c_res {
   } c_res;
 
 /* Top level search routine */
-extern cilk int solve(char *m, position *p, int d, int *rd, int g, int f);
+extern cilk int solve(char *m, position p, int d, int *rd, int g, int f);
 
 /* Miscellaneous routines */
 extern void init_hash(int size, char *file);
