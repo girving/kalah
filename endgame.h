@@ -58,6 +58,10 @@ extern inline void eg_setd(size_t i, int v);
 extern inline int eg_getd_explicit(struct endgame *eg, size_t i);
 extern inline void eg_setd_explicit(struct endgame *eg, size_t i, int v);
 
+/* for generator use */
+
+void position_iterate(void (*f)(position *p), int n);
+
 /* inline code */
 
 extern inline int eg_maxval() {

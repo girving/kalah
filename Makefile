@@ -4,13 +4,14 @@
 
 CC = gcc
 CILK = cilk
-CFLAGS = -funroll-loops -Winline -Wall
+CFLAGS = -O3 -funroll-loops -Winline -Wall
 CILKFLAGS = $(CFLAGS) #-cilk-profile -cilk-critical-path
 
 ELIDE = -DNOCILK -x c
 
 obj = endgame.o rules.o
-objects = kalah.o kalah-s.o crunch.o crunch-s.o hash.o hash-s.o generator.o twiddle.o $(obj) 
+objects = kalah.o kalah-s.o crunch.o crunch-s.o hash.o hash-s.o generator.o twiddle.o classify.o $(obj) 
+progs = generator twiddle classify
 
 %-s.o: %.cilk
 	$(CC) $(CFLAGS) -c -o $@ $(ELIDE) $<
@@ -21,15 +22,18 @@ objects = kalah.o kalah-s.o crunch.o crunch-s.o hash.o hash-s.o generator.o twid
 %: %.o $(obj)
 	$(CC) $(CFLAGS) -o $@ $^
 
-all: kalah kalah-s generator twiddle
-cilk: kalah generator twiddle
-serial: kalah-s generator twiddle
+all: kalah kalah-s $(progs)
+cilk: kalah $(progs)
+serial: kalah-s $(progs)
 
 kalah: kalah.o crunch.o hash.o $(obj)
 	$(CILK) $(CILKFLAGS) -o $@ $^
 
 kalah-s: crunch-s.o hash-s.o
-generator twiddle:
+generator twiddle classify:
+
+classify: classify.o $(obj)
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 $(objects) : elision.h params.h rules.h
 
@@ -39,5 +43,5 @@ crunch.o crunch-s.o generator.o endgame.o : endgame.h
 
 .PHONY: clean
 clean:
-	rm -f *.o kalah kalah-s generator twiddle
+	rm -f *.o kalah kalah-s $(progs)
 

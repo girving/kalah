@@ -119,4 +119,52 @@ size_t eg_index(int t, position *p) {
     }
   }
 
- 
+/******** for generator use */ 
+
+void position_iterate(void (*f)(position *p), int n) {
+  position p;
+  int i,j,k;
+  p.s = 0;
+  fill_pos(&p,0);
+
+  i = n;
+  printf("%2d) ",i);
+  fflush(stdout);
+  for (j=1;j<i;j++) { 
+    p.a[PITS-1] = j;  
+    for (;;) { 
+      p.a[LPIT-1] = i-j;
+      for (;;) { 
+        f(&p);
+        k = LPIT-1;
+        while (!p.a[k]) k--;
+        if (k == PITS+1) { 
+          p.a[k] = 0;
+          break;
+          }
+        p.a[k]--;
+        p.a[k-1]++;
+        while (k < LPIT-1) { 
+          p.a[LPIT-1] += p.a[k];
+          p.a[k++] = 0;
+          }
+        }
+      k = PITS-1;
+      while (!p.a[k]) k--; 
+      if (!k) { 
+        p.a[k] = 0;
+        break;
+        }
+      p.a[k]--;
+      p.a[k-1]++; 
+      while (k < PITS-1) { 
+        p.a[PITS-1] += p.a[k];
+        p.a[k++] = 0;
+        }
+      }
+    putchar('.');
+    fflush(stdout);
+    }
+  putchar('\n');
+  }
+

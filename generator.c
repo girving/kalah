@@ -142,9 +142,6 @@ int crunch(int n, size_t l, position *p) {
 
 void complete(int n) {
   position p;            
-  long long temp;
-  int i,j;
-  size_t k;
   if (n <= saved) {
     printf("Already computed\n");
     return;
@@ -163,49 +160,17 @@ void complete(int n) {
   eg.n = n;
   eg.size = size;
 
-  for (i=stones+1;i<=n;i++) {
-    printf("%2d) ",i);
-    fflush(stdout);
-    for (j=1;j<i;j++) {
-      p.a[PITS-1] = j;  
-      for (;;) {
-        p.a[LPIT-1] = i-j;
-        for (;;) {
-          k = eg_index(i,&p);
-          temp++;
-          if (eg_getd(k) == maxval)
-            crunch(i,k,&p);
-          k = LPIT-1;
-          while (!p.a[k]) k--;
-          if (k == PITS+1) {
-            p.a[k] = 0;
-            break;
-            }
-          p.a[k]--;
-          p.a[k-1]++;
-          while (k < LPIT-1) {
-            p.a[LPIT-1] += p.a[k];
-            p.a[k++] = 0;
-            }
-          }
-        k = PITS-1;
-        while (!p.a[k]) k--; 
-        if (!k) {
-          p.a[k] = 0;
-          break;
-          }
-        p.a[k]--;
-        p.a[k-1]++; 
-        while (k < PITS-1) {
-          p.a[PITS-1] += p.a[k];
-          p.a[k++] = 0;
-          }
-        }
-      putchar('.');
-      fflush(stdout);
-      }
-    putchar('\n');
+  int i;
+
+  void handle_position(position *p) {
+    int k = eg_index(i, p);
+    if (eg_getd(k) == maxval)
+      crunch(i, k, p); 
     }
+
+  for (i=stones+1;i<=n;i++)
+    position_iterate(handle_position, i);
+  
   stones = n;
   }
           
