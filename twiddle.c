@@ -2,6 +2,9 @@
 // Geoffrey Irving
 // 18aug00
 
+#define NOCILK
+#include "elision.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,7 +12,9 @@
 #include <limits.h>
 
 #include "rules.h"
+#include "hash.cilkh"
 #include "endgame.h"
+#include "crunch.cilkh"
 
 void usage() {
   fprintf(stderr,"Usage: twiddle [OPTIONS] m n s\n");
@@ -37,6 +42,9 @@ void misc() {
   printf("  0xffffffff: %d\n",0xffffffff);
   printf("  UINT_MAX: %d\n",UINT_MAX);
   printf("  ULONG_MAX: %ld\n",ULONG_MAX);
+#define P_S(a) printf("  " #a ": %d\n",sizeof(a));
+  printf("Data sizes:\n");
+  P_S(int); P_S(position); P_S(datumaccess); P_S(c_res); 
   }
 
 void expandmovelist(position p, char *m, int verbose) {

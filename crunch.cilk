@@ -71,66 +71,66 @@ static inline void smallsort(int n, int *r, c_res **v) {
       }
   } 
 
-/* Handle leaf nodes, endgame lookups, futility pruning, and hash lookups */
-static inline int peek(position *p, datumaccess *da, int d, int *rd, int a) {
+/* Handle all O(1) stuff */ 
+static inline int peek(c_res *s, int d, int a) {
   int r,k,t;
 
   STAT(stat.peeks++);
 
   /* handle end of game */
-  if (p->w >= 0) {
-    *rd = 200;
-    return rate(p);
+  if (s->p.w >= 0) {
+    s->rd = 200;
+    return rate(&s->p);
     }
   
-  k = stones - p->a[LPIT] - p->a[PITS];
+  k = stones - s->p.a[LPIT] - s->p.a[PITS];
  
   /* endgame database */
   if (eg_known(eg,k)) {
     STAT(stat.eg_lookups++);
-    r = eg_lookup(eg,k,p,&t);
+    r = eg_lookup(eg,k,&s->p,&t);
     if (t == EG_EXACT || r > a) { 
-      *rd = 250; 
+      s->rd = 250; 
       return r;
       }
     }
   
-  r = rate(p);
+  r = rate(&s->p);
 
   /* futility pruning */
   if (r + k <= a) {
     STAT(stat.f_cutoffs++);
-    *rd = 250;
+    s->rd = 250;
     return r + k;
     }
   if (r - k + 2 > a) {
     STAT(stat.f_cutoffs++);
-    *rd = 250;
+    s->rd = 250;
     return r - k + 2;
     }
 
   /* transposition table */ 
-  ha_lookup(ha,da,p);
-  if (da->t && da->d >= d && (da->t == DV_LO ? da->r > a : da->r <= a)) {
+  ha_lookup(ha,&s->da,&s->p);
+  if (s->da.t && s->da.d >= d && (s->da.t == DV_LO ? s->da.r > a : s->da.r <= a)) {
     STAT(stat.ha_lookups++);
-    *rd = da->d;
-    return da->r;
+    s->rd = s->da.d;
+    return s->da.r;
     }
 
   /* evaluate leaf nodes */
   if (!d) {
-    *rd = 0;
+    s->rd = 0;
     return r;
     }  
 
   /* failure */
-  *rd = -1;      
+  s->rd = -1;      
   return r;
   }
 
 /* Minimal-window fail-soft jamboree negamax search */
 cilk c_res* crunch(c_res* s, int d, int a) {
-  int i,r,n,cd,tm,cutoff;
+  int i,r,n,tm,cutoff;
 
   c_res c[PITS];
   c_res *o[PITS];
@@ -169,11 +169,10 @@ cilk c_res* crunch(c_res* s, int d, int a) {
     if (bin(&s->p,i)) {
       c[i].p = s->p;
       c[i].k = move(&c[i].p,i);
-      r = c[i].k ?  peek(&c[i].p,&c[i].da,d,&cd,a) : 
-                   -peek(&c[i].p,&c[i].da,d,&cd,-a-1);
-      if (++cd > 0) {    // peek sucessful
-        if (cd < s->rd)
-          s->rd = cd;
+      r = c[i].k ?  peek(&c[i],d,a) : -peek(&c[i],d,-a-1);
+      if (++c[i].rd > 0) {    // peek sucessful
+        if (c[i].rd < s->rd)
+          s->rd = c[i].rd;
         if (s->r < r) {
           s->r = r;
           *s->m = i + '0'; 
