@@ -50,6 +50,14 @@ extern stat_t stat;
 extern void init_stat();
 extern void print_stat(FILE *f, char *p);
 
+/* Internal crunch parameter structure */
+typedef struct __c_res {
+  int k,o,r,rd;
+  position p;
+  datumaccess da;
+  char m[MAXMVC];
+  } c_res;
+
 /* Top level search routine */
 extern cilk int solve(char *m, position *p, int d, int *rd, int g, int f);
 

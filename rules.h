@@ -9,7 +9,7 @@
 #include <string.h>
 #include "params.h"
 
-typedef struct __position {
+typedef struct {
   char s;
   signed char w;  
   char a[TPITS];

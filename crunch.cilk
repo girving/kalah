@@ -53,14 +53,6 @@ void print_stat(FILE *f, char *p) {
   fprintf(f,"%sNodes per second: %.lf\n",p,stat.nodes/stat.elapsed);
   }
 
-/* argument / return value structure for crunch */
-typedef struct __c_res {
-  int k,o,r,rd;
-  position p;
-  datumaccess da;
-  char m[MAXMVC];
-  } c_res;
-
 static inline void smallsort(int n, int *r, c_res **v) {
   register int i,j,tr;
   register c_res *tv;
@@ -256,13 +248,11 @@ cilk int toplevel(char *m, position *p, int d, int *rd, int a) {
   return s.r; 
   }
 
-static inline double accurate_time() {
-  return Cilk_wall_time_to_sec(Cilk_get_wall_time());
-  }
-
 cilk int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
   int a, td;
   char cm[MAXMVC];
+  Cilk_time start;
+  double elapsed;
   double t_s, t_e;
   int r = g;
   int lo = -1000;
@@ -273,7 +263,7 @@ cilk int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
 
   do {
     a = (r == lo) ? r : r-1;
-    t_s = accurate_time();  
+    start = Cilk_get_wall_time();  
     r = spawn toplevel(cm,p,d,&td,a);
     sync;
 
@@ -285,10 +275,10 @@ cilk int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
       }
     else
       hi = r;
-    t_e = accurate_time();
-    stat.elapsed += t_e - t_s;
+    elapsed = Cilk_wall_time_to_sec(Cilk_get_wall_time() - start);
+    stat.elapsed += elapsed;
     if (f & SF_VERBOSE) {
-      printf("  %d %d, a %d, d %d, m %s, t %f\n",lo,hi,a,td,cm,t_e-t_s);
+      printf("  %d %d, a %d, d %d, m %s, t %f\n",lo,hi,a,td,cm,elapsed);
       if (f & SF_FLOOD)
         print_stat(stdout,"    ");
       }

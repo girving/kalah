@@ -22,8 +22,8 @@ void eg_init_tables(endgame *e) {
     e->ai[i][1] = e->ai[i-1][i-1];
     for (j=1;j<i;j++)
       e->ai[i][j+1] = e->ai[i][j] + e->bi[j] * e->bi[i-j];
-    if (e->ai[i][i] & 1)
-      e->ai[i][i]++;
+    if (e->ai[i][i] & 7)
+      e->ai[i][i] = (e->ai[i][i] & ~7) + 8;
     e->si[i] = (e->ai[i][i] - e->ai[i][1]) >> 1;
     }
 
@@ -76,8 +76,9 @@ extern void free_endgame(endgame *e) {
   free(e->d);  
   }
 
-extern unsigned long eg_index(endgame *e, int t, position *p) {
-  register int i,k,r;
+extern index_t eg_index(endgame *e, int t, position *p) {
+  register int i,k;
+  register index_t r;
   if (p->s) {
     r = 0; 
     k = p->a[PITS+1];

@@ -15,6 +15,23 @@
 #include <stdio.h> 
 #include "params.h"
 #include "rules.h"
+
+#define HASH_32 32
+#define HASH_64 64
+#define ZOBRIST 2
+#define LOCKBITS 10
+#define LOCKSIZE (1<<LOCKBITS)
+#define LOCKMASK (LOCKSIZE-1)
+
+/* Optional parameters */
+#define LOWDEPTH 3
+#define HASH 32
+#define LOCKING
+
+#ifndef CILK
+#undef LOCKING
+#endif
+
 #include "mix.h"
 
 #define hashsize(n) (1L<<(n))
@@ -36,14 +53,12 @@ typedef struct __datum {
 
 typedef struct __datumaccess {
   datum *c;
-
 #ifdef LOCKING
   Cilk_lockvar *l;
 #endif
-
   ub8 b;
-  int ko,br,t, r;
-  unsigned char d,m;
+  unsigned char ko,t,d,m;
+  signed char br, r;
   } datumaccess;
 
 extern void da_seta(datumaccess *da, int d, int m, int r, int t);
