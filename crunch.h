@@ -32,19 +32,19 @@ extern hash* ha;
 extern endgame* eg; 
 
 /* Job statistics */
-struct stat_t {
+typedef struct __stat_t {
   int maxdepth;
   double elapsed;
   long long nodes, peeks, cutoffs;
   long long ha_lookups, eg_lookups, f_cutoffs;
-  };
+  } stat_t;
 
 extern stat_t stat;
 extern void init_stat();
 extern void print_stat(FILE *f, char *p);
 
 /* Top level search routine */
-extern int solve(int s, char *m, position *p, int d, int *rd, int g, int f);
+extern int solve(char *m, position *p, int d, int *rd, int g, int f);
 
 /* Miscellaneous routines */
 extern void init_hash(int size, char *file);

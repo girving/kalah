@@ -1,6 +1,6 @@
-// Mancala knowledge hash class header file
+// Kalah knowledge hash class header file
 // Geoffrey Irving
-// 29july99
+// 4sep0
 
 #ifndef __HASH_H
 #define __HASH_H
@@ -16,11 +16,11 @@ typedef unsigned long ub4;
 #define hashsize(n) ((ub4)1<<(n))
 #define hashmask(n) (hashsize(n)-1)
 
-struct datum {
+typedef struct __datum {
   ub4 b1, b2;
   signed char r; 
   unsigned char d,m,f;
-  };
+  } datum;
 
 // Datum flags
 #define D_TYPE 3
@@ -30,56 +30,53 @@ struct datum {
 #define DV_EXACT 3
 #define D_STALE 4 
 
-class datumaccess { 
-    friend class hash;
- 
-    datum* c;
-    ub4 b1, b2;
-    int ko, cf, br, cr;
-    unsigned char cd,cm;
-    int collision; 
-  public:
-    int gett() { return cf; }
-    int getd() { return cd; } 
-    int getm() { return cm; }
-    int getr() { return cr; } 
+typedef struct __datumaccess {
+  datum *c;
+  ub4 b1, b2;
+  int ko, br;
+  int t, r;
+  unsigned char d,m;
+  int collision; 
+  } datumaccess;
 
-    int seta(int d, int m, int r);
-    void sett(int t) { c->f = t; }
+extern int da_seta(datumaccess *da, int d, int m, int r);
+static inline void da_sett(datumaccess *d, int t) { d->c->f = t; }
+static inline void da_verify(datumaccess *d);
 
-    void verify();
-  };
 
-class hash {
-    int bits;        // logarithmic size of hash table 
-    long size;       // size of hash table (2^bits)
-    long entries;    // number of entries 
-    long mask;       // hash mask (size-1)
+typedef struct __hash {
+  int bits;        // logarithmic size of hash table 
+  long size;       // size of hash table (2^bits)
+  long entries;    // number of entries 
+  long mask;       // hash mask (size-1)
 
-    datum* d;        // hash table 
-  
-  public:
-    hash(int bitsize);             
-    hash(FILE* f);       
-    void save(FILE* f);
-    ~hash();           
+  datum *d;        // hash table 
+  } hash;
 
-    void setstale();  // set staleness flag for all entries    
-    void lookup(datumaccess *da, int s, position *p); 
-  }; 
+extern void create_hash(hash *h, int bitsize);
+extern void read_hash(hash *h, FILE *f);
+extern void write_hash(hash *h, FILE *f);
+extern void free_hash(hash *h);
 
-inline void datumaccess::verify() {
-  if (ko) return;
-  int t = c->f;
-  if (t && c->b1 == b1 && c->b2 == b2) {
-    cf = t & D_TYPE;
-    c->f = cf;
-    cr = br + c->r;
-    cd = c->d;
-    cm = c->m;
+extern void setstale(hash *h);
+extern void ha_lookup(hash *h, datumaccess *da, position *p);
+
+
+/* inline code */
+
+static inline void da_verify(datumaccess *d) {
+  int t;
+  if (d->ko) return;
+  t = d->c->f;
+  if (t && d->c->b1 == d->b1 && d->c->b2 == d->b2) {
+    d->t = t & D_TYPE;
+    d->c->f = d->t;
+    d->r = d->br + d->c->r;
+    d->d = d->c->d;
+    d->m = d->c->m;
     }
   else
-    cf = 0;
+    d->t = 0;
   }
 
 #endif

@@ -8,24 +8,11 @@
 #include "rules.h"
 #include "endgame.h"
 
-class generator {
-    long long si[100], ai[100]; 
+long long si[100], ai[100]; 
+long stones, crunched, saved;
+endgame *eg;
  
-    void create();
-    void initsize();
-    int crunch(int s, int n, unsigned long l, position& p);
-  public:
-    long stones, crunched, saved;
-    endgame* eg;
-    
-    generator();
-    void save();
-    void info(int v);
-    void test();
-    void complete(int n);
-  };
-
-void generator::create() {
+void create() {
   FILE* f = fopen("endgame.dat","w");
   int i = 0;
   long l = 0;
@@ -34,7 +21,7 @@ void generator::create() {
   fclose(f);
   }
 
-void generator::initsize() {
+void initsize() {
   int i,j;
   long long ci[100];
   ci[0] = 1;
@@ -54,29 +41,30 @@ void generator::initsize() {
     }
   }
 
-generator::generator() {
-  int i,nm[40];
+void setup() {
+  int i;
+  FILE *f;
   if (access("endgame.dat",F_OK))
     create();
-  for (i=0;i<40;i++)
-    nm[i] = 1;
-  FILE* f = fopen("endgame.dat","r");  
-  eg = new endgame(f,40,nm);
+  f = fopen("endgame.dat","r");  
+  eg = (endgame*) malloc(sizeof(endgame));
+  read_endgame(eg,f,40);
   fclose(f);
   stones = saved = eg->n;
   crunched = eg->size * 2;
   initsize();
   }
 
-void generator::save() {
+void save() {
+  FILE *f;
   if (stones == saved)
     return;
-  FILE* f = fopen("endgame.dat","w");
-  eg->save(f);
+  f = fopen("endgame.dat","w");
+  write_endgame(eg,f); 
   fclose(f);
   }
 
-void generator::info(int v) {
+void info(int v) {
   int i,j,s;
   int h[32];
   if (!v) {
@@ -84,7 +72,7 @@ void generator::info(int v) {
       h[i] = 0;
     for (i=1;i<=eg->n;i++)
       for (j=eg->di[i][1];j<eg->di[i][i];j++)
-        h[eg->getd(j)]++;
+        h[eg_getd(eg,j)]++;
 
     printf("Database info:\n");
     printf("  Stones: %ld\n",stones);
@@ -105,9 +93,10 @@ void generator::info(int v) {
     }
   }
 
-void generator::test() {
+void test() {
   position p;
   int i,k,s=0;
+  p.s = 0;
   printf("Enter position: ");
   for (i=0;i<TPITS;i++) {
     scanf("%d",&k);
@@ -119,58 +108,56 @@ void generator::test() {
     printf("Too many total stones.\n");
     return;
     }
-  printf("Index: %ld\n",eg->index(0,s,&p));
-  printf("Entry: %d\n",eg->getd(eg->index(0,s,&p)));
-  i = eg->lookup(0,s,&p,&k);
+  printf("Index: %ld\n",eg_index(eg,s,&p));
+  printf("Entry: %d\n",eg_getd(eg,eg_index(eg,s,&p)));
+  i = eg_lookup(eg,s,&p,&k);
   if (k == EG_EXACT)
     printf("Rate:  %d\n",i);
   else
     printf("Rate:  %d+\n",i);
   }
 
-int generator::crunch(int s, int n, unsigned long l, position& p) {
-  int i,v,r,k;
+int crunch(int n, unsigned long l, position *p) {
+  int i,s,v,r,k,e;
   position t;
   v = 1;
-  p.a[LPIT] = p.a[PITS] = 0;  
+  p->a[LPIT] = p->a[PITS] = 0;  
   for (i=0;i<PITS;i++)
-    if (p.bin(s,i)) {
-      t = p;    
-      k = t.move(s,i); 
-      r = t.bin(s,PITS);
+    if (bin(p,i)) {
+      t = *p;    
+      s = p->s;
+      e = move(&t,i); 
+      r = a_bin(p,s,PITS);
       if (t.w == -1) {
-        if (k) {
-          k = eg->index(s,n-r,&t);
-          if (eg->getd(k) == 15)
-            r += crunch(s,n-r,k,t); 
-          else 
-            r += eg->getd(eg->index(s,n-r,&t)) + 1;
+        k = eg_index(eg,n-r,&t);
+        s = eg_getd(eg,k);
+        if (s == 15) {
+          s = crunch(n-r,k,&t);
+          r = e ? r + s : n - s;
           }
-        else {
-          k = eg->index(1-s,n-r,&t);
-          if (eg->getd(k) == 15)
-            r = n - crunch(1-s,n-r,k,t); 
-          else 
-            r = n - eg->getd(k) - 1;
-          }
+        else
+          r = e ? r + s + 1 : n - s - 1;
         }
       if (r > v)
         v = r;
       }
-  eg->setd(l,v);
+  eg_setd(eg,l,v);
   crunched++;
   return v;
   }
 
-void generator::complete(int n) {
-  position p(0);            
+void complete(int n) {
+  position p;            
   FILE* f;
   int i,j,k;
 
+  p.s = 0;
+  fill_pos(&p,0);
+
   if (n <= eg->n) 
     return;
-  delete[] eg->d;
-  eg->d = new unsigned char[eg->ai[n][n] >> 1];
+  free(eg->d);
+  eg->d = (unsigned char*) malloc(eg->ai[n][n] >> 1);
   f = fopen("endgame.dat","r");  
   fseek(f,sizeof(int)+sizeof(long),SEEK_CUR);
   fread(eg->d,sizeof(char),eg->size,f);
@@ -188,9 +175,9 @@ void generator::complete(int n) {
       for (;;) {
         p.a[LPIT-1] = i-j;
         for (;;) {
-          k = eg->index(0,i,&p);
-          if (eg->getd(k) == 15)
-            crunch(0,i,k,p);
+          k = eg_index(eg,i,&p);
+          if (eg_getd(eg,k) == 15)
+            crunch(i,k,&p);
           k = LPIT-1;
           while (!p.a[k]) k--;
           if (k == PITS+1) {
@@ -225,15 +212,12 @@ void generator::complete(int n) {
   eg->n = stones = n;
   }
           
-void main() {
-  generator g;          
-  char c[10];
+int main() {
+  char c[10] = "h";
   int v;
-  int unsaved;
+
+  setup();
   
-  *c = 'h';;
-  unsaved = 0;
- 
   for (;;) {
     switch (*c) {
       case 'h': printf("Commands:\n");
@@ -246,30 +230,31 @@ void main() {
                 printf("  e   - exit\n\n");
                 break;
 
-      case 'i': g.info(0); 
+      case 'i': info(0); 
                 break;
 
       case 't': scanf("%d",&v);
-                g.info(v);
+                info(v);
                 break;
  
-      case 'r': g.test();
+      case 'r': test();
                 break;
 
       case 'c': scanf("%d",&v);
-                if (v > g.stones) {
-                  g.save();
-                  g.complete(v);
+                if (v > stones) {
+                  save();
+                  complete(v);
                   }
                 else
                   printf("Already computed.\n");
                 break;
 
-      case 's': g.save();
+      case 's': save();
                 break;
 
       case 'q': 
-      case 'e': g.save();
+      case 'e': save();
+                free_endgame(eg);
                 return 0;
       }
     printf("> ");

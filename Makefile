@@ -13,23 +13,23 @@ kalah: kalah.o crunch.o rules.o hash.o endgame.o
 generator: generator.o rules.o endgame.o
 	gcc $(CFLAGS) -o generator generator.o rules.o endgame.o
 
-kalah.o: $(HDR) crunch.h kalah.cpp
-	gcc -c $(CFLAGS) kalah.cpp 
+kalah.o: $(HDR) crunch.h kalah.c
+	gcc -c $(CFLAGS) kalah.c 
 
-generator.o: $(HDR) endgame.h generator.cpp
-	gcc -c $(CFLAGS) generator.cpp
+generator.o: $(HDR) endgame.h generator.c
+	gcc -c $(CFLAGS) generator.c
 
-rules.o: $(HDR) rules.cpp
-	gcc -c $(CFLAGS) rules.cpp
+rules.o: $(HDR) rules.c
+	gcc -c $(CFLAGS) rules.c
 
-crunch.o: $(HDR) hash.h endgame.h crunch.h crunch.cpp
-	gcc -c $(CFLAGS) crunch.cpp
+crunch.o: $(HDR) hash.h endgame.h crunch.h crunch.c
+	gcc -c $(CFLAGS) crunch.c
 
-hash.o: $(HDR) hash.h hash.cpp
-	gcc -c $(CFLAGS) hash.cpp
+hash.o: $(HDR) hash.h hash.c
+	gcc -c $(CFLAGS) hash.c
 
-endgame.o: $(HDR) endgame.h endgame.cpp
-	gcc -c $(CFLAGS) endgame.cpp
+endgame.o: $(HDR) endgame.h endgame.c
+	gcc -c $(CFLAGS) endgame.c
 
 clean:
 	rm *.o kalah generator

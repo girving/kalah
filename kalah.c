@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   char *endgamefile = "endgame.dat";
 
   position p;
-  int i,s,r,rd;
+  int i,r,rd;
   int d = 200;
   char *m;
   char moves[400];
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
   switch (argv[optind++][0]) {
     case 's':
       if (argc - optind != 1) usage();
-      p = position(atoi(argv[optind]));
+      fill_pos(&p,atoi(argv[optind]));
       break;
     case 'p':
       if (argc - optind != TPITS) usage();
@@ -83,28 +83,27 @@ int main(int argc, char **argv) {
   init_endgame(endgamesize,endgamefile);
   init_stat();
 
-  s = 0;
+  p.s = 0;
   r = guess;
   m = moves;
-  printq(stdout,0,p);
+  printq(stdout,p);
   while (p.w < 0) {
-    r = solve(s,m,&p,d,&rd,r,flags);
-    printf("Move: s %d, m %s, r %d, rd %d\n",s,m,r,rd);
+    r = solve(m,&p,d,&rd,r,flags);
+    printf("Move: s %d, m %s, r %d, rd %d\n",p.s,m,r,rd);
     if (!game) break;
     do { 
-      if (!p.move(s,*m++-'0')) {
-        s = 1 - s;
+      if (!move(&p,*m++-'0')) {
         r = -r;
         memmove(m+1,m,strlen(m)+1);
         *m++ = '-';
         }
       if (game)
-        printq(stdout,s,p);
+        printq(stdout,p);
       } while (*m && d == 200);
     }
 
   if (game) {
-    printf("Winner: s %d, r %d\n",p.w,p.rate(p.w));
+    printf("Winner: s %d, r %d\n",p.w,a_rate(&p,p.w));
     *m-- = 0;
     if (*m == '-')
       *m = 0;

@@ -12,50 +12,44 @@
 #define EG_LO 1
 #define EG_EXACT 3
 
-class endgame {
-    int n;
-    unsigned long size;
-    int nm[50];   
-    unsigned char* d;
+typedef struct __endgame {
+  int n;
+  unsigned long size;
+  int nm[50];   
+  unsigned char* d;
 
-    unsigned long ai[50][50];
-    unsigned long bi[50];
-    unsigned long ci[LPIT][50];
-    unsigned long di[50][50];
-    unsigned long si[50];
+  unsigned long ai[50][50];
+  unsigned long bi[50];
+  unsigned long ci[LPIT][50];
+  unsigned long di[50][50];
+  unsigned long si[50];
+  } endgame;
 
-    unsigned long index(int s, int t, position *p); 
-    int getd(unsigned long i);
-    void setd(unsigned long i, int v);
-    
-    void initialize();
+extern void read_endgame(endgame *e, FILE *f, int n);
+extern void write_endgame(endgame *e, FILE *f);
+extern void free_endgame(endgame *e);
 
-    friend class generator;
-    void save(FILE *f);
-  
-  public:
-    endgame(FILE *f, int nv, int *mv = 0);
-    ~endgame();
+extern void eg_init_tables(endgame *e);  
+extern unsigned long eg_index(endgame *e, int t, position *p);
 
-    int stones() { return n; }
-    unsigned long memory() { return size; }
-    int known(int t) { return t > n ? 0 : nm[t]; }
-    int lookup(int s, int t, position *p, int *q);
-  };
+static inline int eg_known(endgame *e, int t) { return t <= e->n; }
+static inline int eg_lookup(endgame *e, int t, position *p, int *q);
 
-inline int endgame::getd(unsigned long i) {
-  return i&1 ? d[i>>1]>>4 : d[i>>1] & 15;
+/* inline code */
+
+static inline int eg_getd(endgame *e, unsigned long i) {
+  return i&1 ? e->d[i>>1]>>4 : e->d[i>>1] & 15;
   }
 
-inline void endgame::setd(unsigned long i, int v) {
+static inline void eg_setd(endgame *e, unsigned long i, int v) {
   if (--v > 15) v = 15;
-  d[i>>1] = i&1 ? d[i>>1] & 15 | (v << 4) : d[i>>1] & 240 | v;
+  e->d[i>>1] = i&1 ? e->d[i>>1] & 15 | (v << 4) : e->d[i>>1] & 240 | v;
   }
 
-inline int endgame::lookup(int s, int t, position *p, int *q) { 
-  int r = getd(index(s,t,p));
+static inline int eg_lookup(endgame *e, int t, position *p, int *q) { 
+  int r = eg_getd(e,eg_index(e,t,p));
   *q = r < 15 ? EG_EXACT : EG_LO;
-  return (++r << 1) - t + p->rate(s);
+  return (++r << 1) - t + rate(p);
   }
 
 #endif

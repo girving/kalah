@@ -1,34 +1,34 @@
-// Code for mancala rules
+// Code for kalah rules
 // Geoffrey Irving
-// 3/24/98
+// 4sep0
 
 #include "rules.h"
 
-position::position(int n) {
-  w = -1;
-  memset(a,n,LPIT);
-  a[PITS] = a[LPIT] = 0;
+void fill_pos(position *p, int n) {
+  p->w = -1;
+  memset(p->a,n,LPIT);
+  p->a[PITS] = p->a[LPIT] = 0;
   }
 
-/* excessively optimized mancala movement routine */
+/* excessively optimized kalah movement routine */
 
-int position::move(register int side, register int i) {
-  register int s;
+extern int move(position *ps, register int i) {
+  int s,t;
   register char *p,*sp,*ep;
-  sp = a;
-  if (side) {
+  sp = ps->a;
+  if (ps->s) {
     i += PITS+1;
     p = sp + i;
     s = *p + i;
     *p = 0;
     ep = sp+TPITS;
-    side = sp[PITS];
+    t = sp[PITS];
     do {
       if (++p == ep)
         p = sp;
       (*p)++;
       } while (++i<s);
-    s = sp[PITS] - side;
+    s = sp[PITS] - t;
     if (s) { 
       sp[PITS] -= s;
       do {
@@ -97,8 +97,8 @@ int position::move(register int side, register int i) {
       }
     *ep = i;
     s = *(sp+PITS);
-    w = (s>i) ? 0 : ((s==i) ? 2 : 1);
-    return 0;
+    ps->w = (s>i) ? 0 : ((s==i) ? 2 : 1);
+    return 1;
     }
   
   p = sp + PITS+1;
@@ -113,32 +113,34 @@ int position::move(register int side, register int i) {
     i += *p; *p = 0;
     *ep = i;
     s = *(sp+LPIT);
-    w = (i>s) ? 0 : ((i==s) ? 2 : 1);
-    return 0;
+    ps->w = (i>s) ? 0 : ((i==s) ? 2 : 1);
+    return 1;
     }
 
+  if (!i)
+    ps->s = 1 - ps->s;
   return i;
   }
 
-void printq(FILE *f, int s, position p) {
+void printq(FILE *f, position p) {
   int i;
   for (i=0;i<=PITS;i++)
-    fprintf(f,"%d ",p.bin(s,i)); 
+    fprintf(f,"%d ",bin(&p,i)); 
   for (i=0;i<=PITS;i++)
-    fprintf(f,"%d ",p.bin(1-s,i)); 
+    fprintf(f,"%d ",o_bin(&p,i)); 
   putc('\n',f);
   }
 
-void print(FILE *f, int s, position p) {
+void print(FILE *f, position p) {
   int i;
   fprintf(f,"  ");
   for (i=0;i<PITS;i++)
-    fprintf(f,"%3d",p.bin(1-s,PITS-1-i));
-  fprintf(f,"\n%2d",p.bin(1-s,PITS));
+    fprintf(f,"%3d",o_bin(&p,PITS-1-i));
+  fprintf(f,"\n%2d",o_bin(&p,PITS));
   for (i=0;i<3*PITS;i++)
     putc(' ',f);
-  fprintf(f,"%3d",p.bin(s,PITS));
+  fprintf(f,"%3d",bin(&p,PITS));
   for (i=0;i<PITS;i++)
-    fprintf(f,"%3d",p.bin(s,i));
+    fprintf(f,"%3d",bin(&p,i));
   putc('\n',f);
   }

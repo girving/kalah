@@ -1,6 +1,6 @@
-// Header file for mancala rules
+// Header file for kalah rules
 // Geoffrey Irving
-// 3/24/98
+// 4sep0
 
 #ifndef __RULES_H
 #define __RULES_H
@@ -9,30 +9,37 @@
 #include <string.h>
 #include "params.h"
 
-class position {
-  public:
-    short w;
-    char a[TPITS];
+typedef struct __position {
+  char s;
+  signed char w;  
+  char a[TPITS];
+  } position;
 
-    position() {}
-    position(int n);
-    int move(int side, int bin);
+extern void fill_pos(position *p, int n);
+extern int move(position *p, int bin);
 
-    int rate(int s) { return s ? a[LPIT]-a[PITS] : a[PITS]-a[LPIT]; }
-    int bin(int s, int b) { return s ? a[b+PITS+1] : a[b]; }
-  };
+static inline int a_rate(position *p, int s) {
+  return s ? p->a[PITS]-p->a[LPIT] : p->a[LPIT]-p->a[PITS]; 
+  }
+static inline int a_bin(position *p, int s, int b) { 
+  return s ? p->a[b] : p->a[b+PITS+1]; 
+  }
 
-extern void printq(FILE *f, int s, position p);
-extern void print(FILE *f, int s, position p);
+static inline int rate(position *p) { return a_rate(p,p->s); }
+static inline int o_rate(position *p) { return a_rate(p,!p->s); }
+static inline int bin(position *p, int b) { return a_bin(p,p->s,b); }
+static inline int o_bin(position *p, int b) { return a_bin(p,!p->s,b); }
+
+extern void printq(FILE *f, position p);
+extern void print(FILE *f, position p);
 
 // Note:
 //   Values are stored in chars for copying speed.
 //   For hashing purposes, bins are restricted to 31 stones,
 //   i.e., 5 bits.  This allows an entire board to be compressed
-//   into a single 64 bit value, with 4 bits to spare.  Mancalas
+//   into a single 64 bit value, with 4 bits to spare.  Kalahahs
 //   are allowed the full 0-255 8-bit range, since they are not 
 //   included in the hashing.  
-
 
 #endif
 
