@@ -111,7 +111,10 @@ cilk int main(int argc, char **argv) {
     }
 
   if (game) {
-    printf("Winner: s %d, r %d\n",p.w,a_rate(p,p.w));
+    if (!a_rate(p,p.w))
+      printf("Tie.\n");
+    else
+      printf("Winner: s %d, r %d\n",p.w,a_rate(p,p.w));
     *m-- = 0;
     if (*m == '-')
       *m = 0;
