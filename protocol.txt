@@ -1,0 +1,41 @@
+Communication protocol between workers:  
+
+Message types:
+
+  hello:
+    s: TAG_HELLO, host
+    master to all: TAG_WORKERS, base, n, pids
+
+  kill slave:
+    s: TAG_KILL
+
+  work request:
+    s: TAG_REQUEST
+    r: TAG_JOB, job    or    TAG_NO_JOB
+
+  cancel:
+    s: TAG_CANCEL, jid 
+
+  done:
+    s: TAG_DONE, job
+
+  statistics:
+    s: TAG_STAT
+    r: TAG_STAT, stat
+
+Notes:
+
+1) Workers register themselves by sending hello messages to all kalah processes.
+   Normal workers ignore these, but the master responds by updating the worker
+   list and sending it to all processes.  The master also sends a base number for
+   creation of unique jids.
+
+2) When jobs are stolen, the process the job was stolen from remembers who stole
+   it, so that any completed children, including those from other processes, may
+   be sent to the correct worker, and cancel messages can be correctly transfered
+   in the other direction.  Thus, if a job is stolen multiple times, a completed
+   child or cancel may go through several processes before reaching its goal.
+
+   Since its really complicated otherwise, these stub jobs will persist until all
+   jobs complete.  For now, this means until the end.
+

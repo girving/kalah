@@ -58,6 +58,9 @@ typedef struct __c_res {
   char m[MAXMVC];
   } c_res;
 
+/* Low level search routine */
+extern cilk c_res* crunch(c_res* s, int d, int a);
+
 /* Top level search routine */
 extern cilk int solve(char *m, position p, int d, int *rd, int g, int f);
 
