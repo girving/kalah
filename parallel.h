@@ -65,33 +65,30 @@ extern jobinfo *cj;
 extern stackinfo p_stack[P_STACKDEPTH];
 extern int p_head, p_tail;
 
-#define P_INIT() \
-  do { \
-    p_stack[p_tail].d = d; \
-    p_stack[p_tail].a = a; \
-    p_stack[p_tail].n = n; \
-    p_stack[p_tail].s = s; \
-    p_stack[p_tail].c = c; \
-    p_stack[p_tail].o = o; \
-    } while (0)
+#define P_INIT() ({       \
+  p_stack[p_tail].d = d;  \
+  p_stack[p_tail].a = a;  \
+  p_stack[p_tail].n = n;  \
+  p_stack[p_tail].s = s;  \
+  p_stack[p_tail].c = c;  \
+  p_stack[p_tail].o = o;  \
+  })
 
-#define P_PUSH()           \
-  do {                     \
-    p_stack[p_tail].i = i; \
-    p_tail++;              \
-    } while (0)
+#define P_PUSH() ({       \
+  p_stack[p_tail].i = i;  \
+  p_tail++;               \
+  })
 
-#define P_POP()                     \
-  do {                              \
-    if (p_head > --p_tail) {        \
-      p_tail++;                     \
-      if (cj->status = JOB_TAKEN) { \
-        cj->s = *p_stack[p_tail].s; \
-        cj->status = JOB_DONE;      \
-        }                           \
-      return 0;                     \
-      }                             \
-    } while (0)
+#define P_POP() ({                 \
+  if (p_head > --p_tail) {         \
+    p_tail++;                      \
+    if (cj->status = JOB_TAKEN) {  \
+      cj->s = *p_stack[p_tail].s;  \
+      cj->status = JOB_DONE;       \
+      }                            \
+    return 0;                      \
+    }                              \
+  })
 
 inline void P_CHECK() {
   int b = pvm_nrecv(-1,-1);

@@ -85,8 +85,8 @@ void free_endgame() {
   }
 
 size_t eg_index(int t, position *p) {
-  register int i,k;
-  register size_t r;
+  int i,k;
+  size_t r;
   if (p->s) {
     r = 0; 
     k = p->a[PITS+1];

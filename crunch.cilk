@@ -237,14 +237,6 @@ cilk c_res* crunch(c_res* s, int d, int a) {
   if (s->rd > LOWDEPTH && (!s->da.t || s->rd >= s->da.d)) 
     da_seta(&s->da, s->rd, *s->m-'0', s->r, s->r > a ? DV_LO : DV_HI);
 
-/*  if (d > 397) {
-    for (i=200;i>d;i--)
-      putchar('*');
-    printf(" d %d, s %d, o %d, a %d, r %d, m %s, rd %d, p ",d+1,s->p.s,s->o,a,s->r,s->m,s->rd);   
-    write_pq(stdout,s->p);
-    }
-*/
-
   return s;
   }
 
