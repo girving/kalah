@@ -1,0 +1,102 @@
+README file for kalah
+Geoffrey Irving
+2feb0
+
+I wrote this very quickly, so it won't be very complete.
+
+Compilation instructions:
+
+  This code contains parallel versions of kalah for both
+cilk and PVM.  The cilk version has been tested only on
+2 processor machines and isn't fast, but seems to work,
+while the PVM code is totally untested.  Both sets of
+parallel code are controlled with macros, namely PVM
+and NOCILK.  It should be easy to delete the PVM code
+so that you don't have to work around it, and the cilk
+code doesn't get in the way significantly.
+
+  A normal make will try to build both cilk and serial
+versions, and will therefore fail if you don't have cilk
+installed.  "make serial" should build only the serial
+version, and should work without cilk.  This will build
+the programs kalah-s (-s means serial), generator, and
+twiddle.
+
+Explanation of generator:
+
+  Normally, you want to give kalah an endgame database to
+work with for speed.  I don't remember if this is optional
+or not.  To build an endgame database, run generator.  It
+takes one optional argument: the name of the database file,
+which defaults to endgame.dat.  It will first ask for the 
+number of bits to use for each entry, which can be 4 or 5.  
+Usually you want 4, unless you're building a really huge 
+database.  Now I will explain the commands:
+
+Commands:
+  h   - help
+  i   - database info
+  t n - size table to n stones
+  r   - lookup a position's rate
+  c n - complete table to n stones
+  s   - save database
+  q   - exit
+
+The database will be immediately created with no information
+in it.  Commands 'h', 'i', 's', and 'q' are self-explanatory,
+except that 'q' automatically runs 's'.
+
+'t' generates a table of the space taken up by databases of
+certain size.  Since the database is loaded entirely into
+memory, this is really important.  The first two columns are
+for 4 bits, and the second two are for 5.  An entry "n) x,y" means
+x bytes to store only the n stone part, and y bytes for n and
+fewer.  Normally only y is important.  "c n" will then generate
+the database in memory, but will not save it until 's' is run.
+
+Explanation of kalah:
+
+  Here is what kalah-s with no arguments prints, since it doesn't
+bother to realize it's serial when calling usage().
+
+Usage: kalah [OPTIONS] s n
+       kalah [OPTIONS] p p0 ... p13
+Starting commands:
+  s n    start with n stones in each pit
+  p ...  start with explicit position
+Options:
+  -d n   search depth (default 200)
+  -r n   guess for minimax value
+  -j     skip iterative deepening
+  -l     single test call at full depth
+  -g     play a complete game
+  -v     verbose output
+  -V     extremely verbose output
+  -t n   transposition table size (required)
+  -e n   endgame database size (required)
+  -T f   tranposition table file (defaults to none)
+  -E f   endgame database file (defaults to endgame.dat)
+Examples:
+  kalah -vt 20 -e 18 s 3
+
+As shown, kalah takes options and then start position information,
+which is given either explicitly or via "s n" for a normal initial
+configuration.  Then it computes minimax values and optimal moves
+as specified by the options.  Here is a partial explanation of options:
+
+"-d n" and "-j" should be self explanatory.  "-r n" changes the default
+first guess "f" in MTD(f) (the default is the rating of the start position).
+-l short circuits MTD(f) after one computation, and thus computes only a lower
+or upper bound.  "-g" switches between both players computing moves until the
+game completes.  "-v" gives status information as the algorithm proceeds, which
+is almost essential for long searches.  "-V" provides more.  "-t n" and "-e n"
+provide the transposition table size in bits, and the endgame database size in
+stones.  The actual size of the transposition table will be 12*2^n bytes, and
+the endgame database size can be found by running generator.  "-E f" is clear.
+If "-T f" is unspecified, the program never reads or writes the transposition
+table to disk.  With "-T f", it does.
+
+
+
+
+
