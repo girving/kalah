@@ -42,7 +42,7 @@ extern endgame* eg;
 typedef struct __stat_t {
   int maxdepth;
   double elapsed;
-  long long nodes, peeks, cutoffs;
+  long long nodes, peeks, cutoffs, i_cutoffs;
   long long ha_lookups, eg_lookups, f_cutoffs;
   } stat_t;
 

@@ -90,10 +90,10 @@ extern int move(position *ps, register int i) {
   if (!(*p || EMPTY_PIT_CHECK)) { 
     ep = sp + LPIT;
     i = *ep;
-    p++;
+    p = sp + PITS + 1;
     for (s=0;s<PITS;s++) {
-      i += *++p; 
-      *p = 0; 
+      i += *p; 
+      *p++ = 0; 
       }
     *ep = i;
     s = *(sp+PITS);

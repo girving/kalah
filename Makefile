@@ -5,7 +5,7 @@
 CFLAGS = -O3 -funroll-loops -Winline
 CILK = cilk# -cilk-profile -cilk-critical-path
 ELIDE = -DNOCILK -x c
-HDR = params.h rules.h
+HDR = elision.h params.h rules.h
 
 all: kalah generator twiddle
 serial: kalah-s
