@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <stdio.h> 
+#include <string.h>
 #include "params.h"
 #include "rules.h"
 
@@ -67,16 +68,21 @@ static inline void da_verify(datumaccess *d);
 
 typedef struct __hash {
   int bits;        // logarithmic size of hash table 
-  long size;       // size of hash table (2^bits)
-  long entries;    // number of entries 
-  long mask;       // hash mask (size-1)
-
+  size_t size;     // size of hash table (2^bits)
+  size_t entries;  // number of entries 
+  size_t mask;     // hash mask (size-1)
 #ifdef LOCKING
   Cilk_lockvar l[LOCKSIZE];
 #endif
-
   datum *d;        // hash table 
   } hash;
+
+typedef struct __hash_header {
+  char sig[2];
+  int bits;
+  size_t size;
+  size_t entries;
+  } hash_header;
 
 extern void create_hash(hash *h, int bitsize);
 extern void read_hash(hash *h, FILE *f);

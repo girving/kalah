@@ -30,9 +30,9 @@ typedef struct __endgame {
 
 typedef struct __endgame_header {
   char sig[2];
-  int n;
-  int bits;
-  long long size;
+  char n[5];
+  char bits[5];
+  char size[20];
   } endgame_header;
 
 extern void read_endgame(endgame *e, FILE *f, int n);
@@ -47,7 +47,7 @@ static inline int eg_lookup(endgame *e, int t, position *p, int *q);
 
 /* internal stuff */
 extern void eg_create(char *file, int bits);
-void eg_init_long_tables(long long a[][50], long long b[], long long c[][50]);
+void eg_init_long_tables(long long a[][100], long long b[], long long c[][100]);
 
 static inline int eg_maxval(endgame *e);
 static inline int eg_getd(endgame *e, size_t i);

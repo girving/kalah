@@ -117,31 +117,34 @@ void reduce_endgame(int n, int b, char *sfile, char *dfile) {
     return;
     }
   fread(&h,sizeof(endgame_header),1,s);
-  if (h.n < n || h.bits < b) {
+  e.n = atoi(h.n);
+  e.bits = atoi(h.bits);
+  e.size = strtoul(h.size,NULL,0);
+  if (e.n < n || e.bits < b) {
     fprintf(stderr,"Cannot create new endgame data\n");
     return;
     }
 
   eg_init_tables(&e);
   e.d = e2.d = buf;
-  e.bits = h.bits;
   nh = h;
-  if (b && h.bits > b)
-    nh.bits = b;
-  e2.bits = nh.bits;
-  if (n && h.n > n)
-    nh.n = n;
-  nh.size = e.ai[nh.n][nh.n] * nh.bits / 8; 
+  if (b && e.bits > b)
+    sprintf(nh.bits,"%-4d",b);
+  e2.bits = atoi(nh.bits);
+  if (n && e.n > n)
+    sprintf(nh.n,"%-4d",n);
+  e2.n = atoi(nh.n);
+  sprintf(nh.size,"%-19lld",(long long) e.ai[e2.n][e2.n] * e2.bits / 8);
   fwrite(&nh,sizeof(endgame_header),1,d);
   
-  while (h.size) {
-    block = h.size > BLOCK ? BLOCK : h.size;
-    h.size -= block;
+  while (e.size) {
+    block = e.size > BLOCK ? BLOCK : e.size;
+    e.size -= block;
     fread(buf,1,block,s);
-    if (h.bits != nh.bits)
-      for (i=0;i<block*8/h.bits;i++)
+    if (e.bits != e2.bits)
+      for (i=0;i<block*8/e.bits;i++)
         eg_setd(&e2,i,eg_getd(&e,i)); 
-    fwrite(buf,1,block*nh.bits/h.bits,d);
+    fwrite(buf,1,block*e2.bits/e.bits,d);
     }
   fclose(s);
   fclose(d);

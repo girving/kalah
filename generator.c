@@ -9,7 +9,7 @@
 #include "endgame.h"
 
 char *file = "endgame.dat";
-long long ai[50][50],bi[50],ci[LPIT][50]; 
+long long ai[100][100],bi[100],ci[LPIT][100]; 
 int stones, saved, maxval;
 long long size, crunched;
 endgame *eg;
@@ -37,8 +37,8 @@ void load(int n) {
     fseek(f,0,SEEK_SET);
     read_endgame(eg,f,n);
     fclose(f);
-    saved = h.n;
-    size = h.size;
+    saved = atoi(h.n);
+    size = atol(h.size);
     stones = eg->n;
     maxval = eg_maxval(eg);
     printf("done\n");
@@ -70,7 +70,7 @@ void info(int v) {
     printf("  Nodes:   %lld\n",crunched);
     putchar('\n');
     }
-  else if (v > 40)
+  else if (v > 90)
     printf("Too many stones\n");
   else {
     long long a1,a2;
@@ -136,8 +136,6 @@ int crunch(int n, size_t l, position *p) {
       if (v < r)
         v = r;
       }
-  if (pos_strcmp(*p,"1 3 0 0 0 0 0 0 1 0 0 1 1 0"))
-    printf("Here: v %d\n",v);
   eg_setd(eg,l,v-1);
   crunched++;
   return v;

@@ -8,7 +8,7 @@
 #define __hash_lowlevel
 #include "mix.h"
 
-#define HASHFILECHECK 27318
+char ha_sig[] = "ha";
 
 void create_hash(hash *h, int bitsize) {
   int i;
@@ -26,18 +26,20 @@ void create_hash(hash *h, int bitsize) {
   }
 
 void read_hash(hash *h, FILE *f) {
-  int i,t;
-  if (fread(&t,sizeof(int),1,f) != 1 || t != HASHFILECHECK) {
+  int i;
+  hash_header hh;
+  fread(&hh,sizeof(hash_header),1,f);
+  if (memcmp(hh.sig,ha_sig,2)) {
     fprintf(stderr,"Corrupt hash file\n");
     exit(-1);
     }
 
-  fread(&h->bits,sizeof(int),1,f);
-  fread(&h->size,sizeof(long),1,f);
-  fread(&h->entries,sizeof(long),1,f);
-  fread(&h->mask,sizeof(long),1,f);
+  h->bits = hh.bits;
+  h->size = hh.size;
+  h->entries = hh.entries;
+  h->mask = hh.size - 1;
 
-  h->d = (datum*) malloc(h->size * sizeof(datum));
+  h->d = malloc(h->size * sizeof(datum));
   if (fread(h->d,sizeof(datum),h->size,f) != h->size)
     exit(-1);
 
@@ -48,15 +50,13 @@ void read_hash(hash *h, FILE *f) {
   }
 
 void write_hash(hash *h, FILE *f) {
-  int t = HASHFILECHECK;
-  fwrite(&t,sizeof(int),1,f);
-  fwrite(&h->bits,sizeof(int),1,f);
-  fwrite(&h->size,sizeof(long),1,f);
-  fwrite(&h->entries,sizeof(long),1,f);
-  fwrite(&h->mask,sizeof(long),1,f);
-
-  if (fwrite(h->d,sizeof(datum),h->size,f) != h->size)
-    exit(0); 
+  hash_header hh;
+  memcpy(hh.sig,ha_sig,2);
+  hh.bits = h->bits;
+  hh.size = h->size;
+  hh.entries = h->entries;
+  fwrite(&hh,sizeof(hash_header),1,f);
+  fwrite(h->d,sizeof(datum),h->size,f);
   }
 
 void free_hash(hash *h) {
