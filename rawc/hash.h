@@ -12,12 +12,13 @@
 
 typedef unsigned short ub2;
 typedef unsigned long ub4;
+typedef unsigned long long ub8;
 
 #define hashsize(n) ((ub4)1<<(n))
 #define hashmask(n) (hashsize(n)-1)
 
 typedef struct __datum {
-  ub4 b1, b2;
+  ub8 b;
   signed char r; 
   unsigned char d,m,f;
   } datum;
@@ -32,7 +33,7 @@ typedef struct __datum {
 
 typedef struct __datumaccess {
   datum *c;
-  ub4 b1, b2;
+  ub8 b;
   int ko, br;
   int t, r;
   unsigned char d,m;
@@ -67,7 +68,7 @@ static inline void da_verify(datumaccess *d) {
   int t;
   if (d->ko) return;
   t = d->c->f;
-  if (t && d->c->b1 == d->b1 && d->c->b2 == d->b2) {
+  if (t && d->c->b == d->b) {
     d->t = t & D_TYPE;
     d->c->f = d->t;
     d->r = d->br + d->c->r;

@@ -38,21 +38,21 @@ twiddle.o: $(HDR) twiddle.c
 rules.o: $(HDR) rules.c
 	gcc $(CFLAGS) -c rules.c
 
-crunch.o: $(HDR) hash.cilkh endgame.h crunch.cilkh crunch.cilk
+crunch.o: $(HDR) mix.h hash.cilkh endgame.h crunch.cilkh crunch.cilk
 	$(CILK) $(CFLAGS) -c crunch.cilk
 
-crunch-s.o: $(HDR) hash.cilkh endgame.h crunch.cilkh crunch.cilk
+crunch-s.o: $(HDR) mix.h hash.cilkh endgame.h crunch.cilkh crunch.cilk
 	gcc $(CFLAGS) -c -o crunch-s.o $(ELIDE) crunch.cilk
 
-hash.o: $(HDR) hash.cilkh hash.cilk
+hash.o: $(HDR) mix.h hash.cilkh hash.cilk
 	$(CILK) $(CFLAGS) -c hash.cilk
 
-hash-s.o: $(HDR) hash.cilkh hash.cilk
+hash-s.o: $(HDR) mix.h hash.cilkh hash.cilk
 	gcc $(CFLAGS) -c -o hash-s.o $(ELIDE) hash.cilk
 
 endgame.o: $(HDR) endgame.h endgame.c
 	gcc $(CFLAGS) -c endgame.c
 
 clean:
-	rm *.o kalah generator twiddle kalah-s
+	rm *.o kalah kalah-s generator twiddle
 

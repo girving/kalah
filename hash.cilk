@@ -5,6 +5,8 @@
 // Hash function written by Bob Jenkins
 
 #include "hash.cilkh"
+#define __hash_lowlevel
+#include "mix.h"
 
 #define HASHFILECHECK 27318
 
@@ -24,7 +26,7 @@ void create_hash(hash *h, int bitsize) {
   }
 
 void read_hash(hash *h, FILE *f) {
-  int t;
+  int i,t;
   if (fread(&t,sizeof(int),1,f) != 1 || t != HASHFILECHECK) {
     fprintf(stderr,"Corrupt hash file\n");
     exit(-1);
@@ -40,7 +42,7 @@ void read_hash(hash *h, FILE *f) {
     exit(-1);
 
 #ifdef LOCKING
-  for (int i=0;i<LOCKSIZE;i++)
+  for (i=0;i<LOCKSIZE;i++)
     Cilk_lock_init(h->l[i]);
 #endif
   }
@@ -69,44 +71,29 @@ extern void setstale(hash *h) {
       p->f |= D_STALE; 
   }
 
-#define HASHOVERFLOW (1<<30)
-
-inline ub4 packpits(char* a) {
-  #if PITS == 2  
-  #define PIT_COMBINE *++a
-  #elif PITS == 3
-  #define PIT_COMBINE *++a | *++a
-  #elif PITS == 4
-  #define PIT_COMBINE *++a | *++a | *++a
-  #elif PITS == 5
-  #define PIT_COMBINE *++a | *++a | *++a | *++a
-  #elif PITS == 6
-  #define PIT_COMBINE *++a | *++a | *++a | *++a | *++a
-  #endif
-
-  if ((*a | PIT_COMBINE) & ~31) 
-    return HASHOVERFLOW;
-  a -= PITS-1;
-
-  return a[0] | (ub4)a[1]<<5 
-  #if PITS > 2
-              | (ub4)a[2]<<10 
-  #if PITS > 3
-              | (ub4)a[3]<<15
-  #if PITS > 4
-              | (ub4)a[4]<<20 
-  #if PITS > 5
-              | (ub4)a[5]<<25 
-  #endif
-  #endif
-  #endif
-  #endif
-  ;
-  }
-
 void ha_lookup(hash *h, datumaccess *da, position *p) {
-  register ub4 a,b,k;
+  ub4 k;
+#if HASH == HASH_64 || HASH == ZOBRIST
+  register ub8 b;
+  if (p->s)
+    b = packpits(p->a) | ((ub8)packpits(p->a+PITS+1) << 32); 
+  else 
+    b = packpits(p->a+PITS+1) | ((ub8)packpits(p->a) << 32); 
 
+  if (b & HASHOVERFLOW64) {
+    da->ko = 1;
+    da->t = DV_INVALID;
+    return;
+    }
+
+  da->b = b;
+#if HASH == HASH_64
+  k = mix64(b);
+#else
+  k = zobrist(*p);
+#endif
+#elif HASH == HASH_32
+  register ub4 a,b;
   if (p->s) {
     a = packpits(p->a);
     b = packpits(p->a+PITS+1);
@@ -115,73 +102,49 @@ void ha_lookup(hash *h, datumaccess *da, position *p) {
     b = packpits(p->a);
     a = packpits(p->a+PITS+1);
     }
-
+  
   if (a == HASHOVERFLOW || b == HASHOVERFLOW) {
     da->ko = 1;
     da->t = DV_INVALID;
     return;
     }
 
-  da->ko = 0;
-  da->b1 = a;
-  da->b2 = b;
-
-  a += 0x9e3779b9; 
-  b += 0x9e3779b9; 
-  k = 0xfca09587;
-  a -= b; a -= k; a ^= (k>>13); 
-  b -= k; b -= a; b ^= (a<<8); 
-  k -= a; k -= b; k ^= (b>>13); 
-  a -= b; a -= k; a ^= (k>>12);  
-  b -= k; b -= a; b ^= (a<<16); 
-  k -= a; k -= b; k ^= (b>>5); 
-  a -= b; a -= k; a ^= (k>>3);  
-  b -= k; b -= a; b ^= (a<<10);
-  k -= a; k -= b; k ^= (b>>15);
+  set_ub8(da->b,a,b);
+  k = mix32(a,b);
+#endif
 
   da->c = h->d + (k & h->mask); 
 #ifdef LOCKING
   da->l = h->l + (k & LOCKMASK);
 #endif
   da->br = rate(p);
+  da->ko = 0;
   da_verify(da);
   }
 
-int da_seta(datumaccess *da, int d, int m, int r, int t) {
-  if (da->ko) return 0;
+void da_seta(datumaccess *da, int d, int m, int r, int t) {
+  if (da->ko) return;
 #ifdef LOCKING
   Cilk_lock(*da->l);
 #endif
-  if (da->c->b1 == da->b1 && da->c->b2 == da->b2) {
+  if (da->c->b == da->b) {
     da->c->d = d;
     da->c->m = m;
     da->c->r = r - da->br;
     da->c->f = t;
-    if (!da->t) {
-      da->c->b1 = da->b1;
-      da->c->b2 = da->b2;
-      }
-#ifdef LOCKING
-    Cilk_unlock(*da->l);
-#endif
-    return 1;
+    if (!da->t)
+      da->c->b = da->b;
     }
   else if ((da->c->f & D_STALE) || da->c->d <= d) {
     da->c->d = d; 
     da->c->m = m; 
     da->c->r = r - da->br;
     da->c->f = t;
-    da->c->b1 = da->b1;
-    da->c->b2 = da->b2;
-#ifdef LOCKING
-    Cilk_unlock(*da->l);
-#endif 
-    return 1;
+    da->c->b = da->b;
     }
 #ifdef LOCKING
   Cilk_unlock(*da->l);
 #endif
-  return 0;
   }
 
 

@@ -6,19 +6,29 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 
 #include "rules.h"
 
 void usage() {
   fprintf(stderr,"Usage: twiddle [OPTIONS] m n s\n");
   fprintf(stderr,"       twiddle [OPTIONS] r n\n");
+  fprintf(stderr,"       twiddle [OPTIONS] d\n");
   fprintf(stderr,"Options:\n");
   fprintf(stderr,"  -h     display this help screen and quit\n");
   fprintf(stderr,"  -v     verbose output\n");
   fprintf(stderr,"Commands:\n");
   fprintf(stderr,"  m n s  expand movelist s starting with n stones\n");
   fprintf(stderr,"  r n    make trial moves starting with n stones\n");
+  fprintf(stderr,"  d      display miscellaneous information\n");
   exit(0);
+  }
+
+void misc() {
+  printf("Miscellaneous information:\n");
+  printf("  0xffffffff: %d\n",0xffffffff);
+  printf("  UINT_MAX: %d\n",UINT_MAX);
+  printf("  ULONG_MAX: %ld\n",ULONG_MAX);
   }
 
 void expandmovelist(position p, char *m, int verbose) {
@@ -92,6 +102,9 @@ int main(int argc, char** argv) {
         usage();
       fill_pos(&p,atoi(argv[optind++]));
       trialmoves(p,verbose);
+      break;
+    case 'd':
+      misc();
       break;
     default:
       usage(); 

@@ -5,6 +5,8 @@
 #ifndef __PARAMS_H
 #define __PARAMS_H
 
+#include "elision.h"
+
 /* Basic rules: */
 #define PITS 6            // pits on one side (PITS < 7)
 #define TPITS (2*PITS+2)  // total pits
@@ -13,12 +15,16 @@
 
 /* Transposition tables: */
 #define LOWDEPTH 3
+#define HASH_32 32 
+#define HASH_64 64
+#define ZOBRIST 2
+#define HASH 64
 
 #ifdef CILK
 #define LOCKBITS 10
 #define LOCKSIZE (1<<LOCKBITS)
 #define LOCKMASK (LOCKSIZE-1)
-//#define LOCKING
+#define LOCKING
 #endif
 
 /* Iterative deepening: */ 

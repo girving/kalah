@@ -15,15 +15,13 @@
 #include <stdio.h> 
 #include "params.h"
 #include "rules.h"
+#include "mix.h"
 
-typedef unsigned short ub2;
-typedef unsigned long ub4;
-
-#define hashsize(n) ((ub4)1<<(n))
+#define hashsize(n) (1L<<(n))
 #define hashmask(n) (hashsize(n)-1)
 
 typedef struct __datum {
-  ub4 b1, b2;
+  ub8 b;
   signed char r; 
   unsigned char d,m,f;
   } datum;
@@ -38,16 +36,17 @@ typedef struct __datum {
 
 typedef struct __datumaccess {
   datum *c;
+
 #ifdef LOCKING
   Cilk_lockvar *l;
 #endif
-  ub4 b1, b2;
-  int ko, br;
-  int t, r;
+
+  ub8 b;
+  int ko,br,t, r;
   unsigned char d,m;
   } datumaccess;
 
-extern int da_seta(datumaccess *da, int d, int m, int r, int t);
+extern void da_seta(datumaccess *da, int d, int m, int r, int t);
 static inline void da_verify(datumaccess *d);
 
 
@@ -82,7 +81,7 @@ static inline void da_verify(datumaccess *d) {
   Cilk_lock(*d->l);
 #endif
   t = d->c->f;
-  if (t && d->c->b1 == d->b1 && d->c->b2 == d->b2) {
+  if (t && d->c->b == d->b) {
     d->t = t & D_TYPE;
     d->c->f = d->t;
     d->r = d->br + d->c->r;
