@@ -55,7 +55,7 @@ void expandmovelist(position p, char *m, int verbose) {
     printf("Positions:\n  ");
     write_pq(stdout,p);
     }
-  while (*q++ = *m) {
+  while ((*q++ = *m)) {
     if (*m >= '0' && *m < PITS+'0') {
       k = move(&p,*m-'0'); 
       if (!k)
