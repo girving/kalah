@@ -77,7 +77,7 @@ static inline int eg_getd(endgame *e, size_t i) {
 static inline int eg_lookup(endgame *e, int t, position *p, int *q) { 
   int r = eg_getd(e,eg_index(e,t,p));
   *q = (r == 15 && e->bits < 5) ? EG_LO : EG_EXACT; 
-  return (++r << 1) - t + rate(p);
+  return (++r << 1) - t + rate(*p);
   }
 
 static inline void eg_setd_4(endgame *e, size_t i, int v) {

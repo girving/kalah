@@ -125,10 +125,10 @@ extern int move(position *ps, register int i) {
 int pos_strcmp(position p, char *s) {
   int i;
   for (i=0;i<=PITS;i++)
-    if (strtol(s,&s,0) != bin(&p,i)) 
+    if (strtol(s,&s,0) != bin(p,i)) 
       return 0;
   for (i=0;i<=PITS;i++)
-    if (strtol(s,&s,0) != o_bin(&p,i)) 
+    if (strtol(s,&s,0) != o_bin(p,i)) 
       return 0;
   return 1;
   }
@@ -136,9 +136,9 @@ int pos_strcmp(position p, char *s) {
 void write_pq(FILE *f, position p) {
   int i;
   for (i=0;i<=PITS;i++)
-    fprintf(f,"%d ",bin(&p,i)); 
+    fprintf(f,"%d ",bin(p,i)); 
   for (i=0;i<=PITS;i++)
-    fprintf(f,"%d ",o_bin(&p,i)); 
+    fprintf(f,"%d ",o_bin(p,i)); 
   putc('\n',f);
   }
 
@@ -146,12 +146,12 @@ void write_p(FILE *f, position p, int s) {
   int i;
   fprintf(f,"  ");
   for (i=0;i<PITS;i++)
-    fprintf(f,"%3d",a_bin(&p,1-s,PITS-1-i));
-  fprintf(f,"\n%2d",a_bin(&p,1-s,PITS));
+    fprintf(f,"%3d",a_bin(p,1-s,PITS-1-i));
+  fprintf(f,"\n%2d",a_bin(p,1-s,PITS));
   for (i=0;i<PITS;i++)
     fputs("   ",f);
-  fprintf(f,"%3d\n  ",a_bin(&p,s,PITS));
+  fprintf(f,"%3d\n  ",a_bin(p,s,PITS));
   for (i=0;i<PITS;i++)
-    fprintf(f,"%3d",a_bin(&p,s,i));
+    fprintf(f,"%3d",a_bin(p,s,i));
   putc('\n',f);
   }

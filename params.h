@@ -11,14 +11,12 @@
 #define PITS 6            // pits on one side (PITS < 7)
 #define TPITS (2*PITS+2)  // total pits
 #define LPIT (TPITS-1)    // index of last pit
-#define MAXGAMELEN 193    // bad things happen if wrong
 
 /* Iterative deepening: */ 
 #define STEPSIZE 3
 #define JUMPDEPTH 30
 
 /* Optional stuff */
-#define PROGRESS 1
 #define STAT(a) a
 
 #endif

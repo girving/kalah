@@ -117,11 +117,11 @@ int crunch(int n, size_t l, position *p) {
   v = 1;
   p->a[LPIT] = p->a[PITS] = 0;
   for (i=0;i<PITS;i++)
-    if (bin(p,i)) {
+    if (bin(*p,i)) {
       t = *p;    
       s = p->s;
       e = move(&t,i); 
-      r = a_bin(&t,s,PITS);
+      r = a_bin(t,s,PITS);
       if (t.w < 0) {
         cn = n - t.a[PITS] - t.a[LPIT];
         k = eg_index(eg,cn,&t);

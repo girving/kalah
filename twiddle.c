@@ -85,8 +85,10 @@ void trialmoves(position p, int verbose) {
       write_pq(stdout,p);
     printf("Side %d, enter move: ",p.s);
     scanf("%d",&m);
-    if (m < 0 || m >= PITS)
-      break;
+    if (m < 0 || m >= PITS || !bin(p,m)) {
+      printf("Invalid move\n");
+      continue;
+      }
     move(&p,m);
     }
   }

@@ -80,7 +80,7 @@ static inline int peek(c_res *s, int d, int a) {
   /* handle end of game */
   if (s->p.w >= 0) {
     s->rd = 200;
-    return rate(&s->p);
+    return rate(s->p);
     }
   
   k = stones - s->p.a[LPIT] - s->p.a[PITS];
@@ -95,7 +95,7 @@ static inline int peek(c_res *s, int d, int a) {
       }
     }
   
-  r = rate(&s->p);
+  r = rate(s->p);
 
   /* futility pruning */
   if (r + k <= a) {
@@ -166,7 +166,7 @@ cilk c_res* crunch(c_res* s, int d, int a) {
   cutoff = 0;
   tm = s->da.t ? s->da.m : -1;
   for (i=PITS-1;i>=0;i--)      
-    if (bin(&s->p,i)) {
+    if (bin(s->p,i)) {
       c[i].p = s->p;
       c[i].k = move(&c[i].p,i);
       r = c[i].k ?  peek(&c[i],d,a) : -peek(&c[i],d,-a-1);
@@ -296,7 +296,7 @@ cilk int solve(char *m, position *p, int d, int *rd, int g, int f) {
   for (i=0;i<TPITS;i++)
     stones += p->a[i];
 
-  r = (f & SF_GUESS) ? g : rate(p);
+  r = (f & SF_GUESS) ? g : rate(*p);
   jump = (f & SF_JUMP) ? 0 : JUMPDEPTH;
   if (f & SF_FLOOD) f |= SF_VERBOSE;
   *rd = 0;

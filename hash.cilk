@@ -117,7 +117,7 @@ void ha_lookup(hash *h, datumaccess *da, position *p) {
 #ifdef LOCKING
   da->l = h->l + (k & LOCKMASK);
 #endif
-  da->br = rate(p);
+  da->br = rate(*p);
   da->ko = 0;
   da_verify(da);
   }

@@ -105,9 +105,9 @@ static inline ub4 zobrist(position p) {
   int i;
   register ub4 k = 0;
   for (i=0;i<PITS;i++)
-    k ^= zobtable[i][bin(&p,i)]; 
+    k ^= zobtable[i][bin(p,i)]; 
   for (i=0;i<PITS;i++)
-    k ^= zobtable[i+PITS][o_bin(&p,i)]; 
+    k ^= zobtable[i+PITS][o_bin(p,i)]; 
   return k;
   } 
 
