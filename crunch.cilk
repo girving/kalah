@@ -196,16 +196,36 @@ cilk c_res* crunch(c_res* s, int d, int a) {
       }
 
   if (!cutoff && n) {
+#ifdef PVM
+    c_res *c;
+    P_INIT();
+#endif
     smallsort(n,cr,o);
   
     /* try first move serially */
+#ifndef PVM
     absorb(spawn crunch(o[0], d, o[0]->k ? a : -a-1));
+#else
+    P_PUSH();
+    c = crunch(o[0], d, o[0]->k ? a : -a-1);
+    P_CHECK();
+    P_POP();
+    absorb(c);
+#endif
     sync;
 
     /* search remaining children in parallel */
     for (i=1;i<n;i++) {
       if (cutoff) break;
+#ifndef PVM
       absorb(spawn crunch(o[i], d, o[i]->k ? a : -a-1));
+#else
+      P_PUSH();
+      c = crunch(o[0], d, o[i]->k ? a : -a-1);
+      P_CHECK();
+      P_POP();
+      absorb(c);
+#endif
       }
 
     sync;

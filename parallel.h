@@ -5,12 +5,6 @@
 #ifndef __PARALLEL_H
 #define __PARALLEL_H
 
-#include <time.h>
-#include <unistd.h>
-#include <pvm3.h>
-#include "log.h"
-#include "crunch.cilkh"
-
 #ifndef PVM        
 #define init_parallel()
 #define P_INIT()
@@ -18,6 +12,12 @@
 #define P_POP()
 #define P_CHECK()
 #else
+
+#include <time.h>
+#include <unistd.h>
+#include <pvm3.h>
+#include "log.h"
+#include "crunch.cilkh"
 
 #define JOB_FREE 0
 #define JOB_DONE 1
@@ -106,3 +106,6 @@ extern void close_parallel();
 /* main functions */
 extern void parallel(c_res* s, int d, int a);   // master
 extern void worker();                           // worker 
+
+#endif
+#endif

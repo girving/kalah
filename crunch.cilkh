@@ -21,6 +21,7 @@
 #include "rules.h"
 #include "hash.cilkh"
 #include "endgame.h"
+#include "parallel.h"
 
 #define MAXMVC 20       // maximum number of moves to calculate
 

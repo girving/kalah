@@ -12,7 +12,7 @@ void fill_pos(position *p, int n) {
 
 /* excessively optimized kalah movement routine */
 
-extern int move(position *ps, register int i) {
+int move(position *ps, register int i) {
   int s,t;
   register char *p,*sp,*ep;
   sp = ps->a;

@@ -195,10 +195,18 @@ void cancel_children(jobinfo *j) {
     if (j->js[i] == JOB_TAKEN)
       send_cancel(j->ctid[i],j->cjid[i]);
   }
+
+/* send off a completed job */
+void send_done(jobinfo *j) {
+  add_stolen(0,j->jid);
+  pvm_initsend(0);
+  pkjobinfo_done(j);
+  pvm_send(j->tid,TAG_DONE);
+  }
  
 /* message handling routine */
 void p_handle(int b) {
-  int i,j,len,tid,tag;
+  int i,k,len,tid,tag;
   jobinfo *j;
   jobinfo tj; 
   pvm_bufinfo(b,&len,&tag,&tid);
@@ -210,8 +218,8 @@ void p_handle(int b) {
         wtid[nw-1] = tid;
         for (i=1;i<nw;i++) {
           pvm_initsend(0);
-          j = i << BASE_SHIFT;
-          pvm_pkint(&j,1,1);
+          k = i << BASE_SHIFT;
+          pvm_pkint(&k,1,1);
           pvm_pkint(&nw,1,1);
           pvm_pkint(wtid,nw,1);
           pvm_send(wtid[i],TAG_WORKERS);
@@ -247,18 +255,47 @@ void p_handle(int b) {
 
     case TAG_DONE:
       upkjobinfo_done(&tj);
-      if (cj->jid == tj.pjid)
+      if (cj && cj->jid == tj.pjid)
         slow_absorb(cj,&tj.s);
+      else if (!tj.jid && master) {
+        j = malloc(sizeof(jobinfo)); 
+        *j = tj;
+        add_jobarray(j);
+        }
       else if ((i = find_jobarray(tj.pjid)) >= 0) { 
         slow_absorb(ja[i],&tj.s);
-        if (ja[i]->status == JOB_DONE)
-        
-
-
+        if (ja[i]->status == JOB_DONE && !(!ja[i]->jid && master)) {
+          send_done(ja[i]);
+          free(ja[i]); 
+          del_jobarray(i);
+          }
+        }
+      else if (tj.tid = find_stolen(tj.pjid))  // if 0, job was cancelled
+        send_done(&tj);
+      break; 
+    
     case TAG_CANCEL:
+      pvm_upkint(&k,1,1); 
+      if (cj && cj->jid == k) {
+        cj->status = JOB_CANCELLED;
+        if (p_head > 0) 
+          cancel_children(cj);
+        p_head = 1000;
+        add_stolen(0,cj->jid);
+        }
+      else if ((i = find_jobarray(k)) >= 0) { 
+        cancel_children(ja[i]);
+        add_stolen(0,ja[i]->jid); 
+        free(ja[i]);
+        del_jobarray(i);
+        }
+      else if (tid = find_stolen(k)) 
+        send_cancel(tid,k); 
+      break;
+
     case TAG_STAT:
     default:
-      logentry("Warning: ignoring invalid message\n");
+      die("Warning: ignoring invalid message\n");
     }
   }
 
@@ -303,15 +340,17 @@ void slow_absorb(jobinfo *j, c_res *c) {
   if (!j->n) { // toplevel job
     j->s.r = c->r;
     j->s.rd = c->rd;
-    strcpy(j->s.m,c->m
-    cj->status = JOB_DONE;
+    strcpy(j->s.m,c->m);
+    j->status = JOB_DONE;
     }
   else {
     done = 0;
 
     for (i=0;i<j->n;i++)
-      if (j->o[i] = c->o)
+      if (j->o[i] == c->o) {
         j->js[i] = JOB_DONE;
+        break;
+        }
 
     r = c->k ? c->r : -c->r;
     if (++c->rd < j->s.rd)
@@ -327,25 +366,27 @@ void slow_absorb(jobinfo *j, c_res *c) {
         STAT(stat.cutoffs++);
         if (j == cj && p_tail > 0) {  // need to cancel a local job
           p_head = 1000;
-          j->js[p_stack[0].i] = JOB_CANCELLED;
+          j->js[p_stack[0].i] = JOB_DONE;
           }
         cancel_children(j);
         done = 1;
         }
       }
-  
+
     if (!done) {
       done = 1;
-      for (i=0;i<j->n;i++)
-        if (cj->status != JOB_DONE)
+      for (i=1;i<j->n;i++)
+        if (j->status != JOB_DONE)
           done = 0;
       }
 
     if (done) {
       if (j->s.rd > LOWDEPTH && (!j->s.da.t || j->s.rd >= j->s.da.d))
         da_seta(&j->s.da, j->s.rd, *j->s.m-'0', j->s.r, j->s.r > j->a ? DV_LO : DV_HI);
-      cj->status = JOB_DONE;
+      j->status = JOB_DONE;
       }
+    else if (!i && j->status == JOB_BLOCKED)
+      j->status = JOB_FREE;
     }
   }
 
@@ -361,7 +402,6 @@ void slow_crunch() {
       c.da = cj->s.da;
       P_PUSH();
       crunch(&c,cj->d,cj->a);
-      P_CHECK();
       P_POP();
       cj->s.r = c.r; 
       cj->s.rd = c.rd;
@@ -382,7 +422,6 @@ void slow_crunch() {
         ha_lookup(ha,&c.da,&c.p);
         P_PUSH();
         crunch(&c,cj->d-1,c.k ? cj->a : -cj->a-1);
-        P_CHECK();
         P_POP();
         slow_absorb(cj,&c);         
         if (cj->status == JOB_DONE)
@@ -403,6 +442,8 @@ void worker() {
     /* find work */
     if (!(cj = freejob()) && !(cj = steal()))
       return;
+    if (cj->status == JOB_DONE)   // done
+      return;
    
     /* do work */
     cj->status = JOB_TAKEN;
@@ -420,10 +461,12 @@ void worker() {
         if (!cj->jid && master)   // done
           return;
         else {
-          send_off(cj);
+          send_done(cj);
+          free(cj);
+          }
+        break;
    
       case JOB_CANCELLED: 
-        add_stolen(0,cj->jid);
         free(cj);
       }
     }
@@ -450,7 +493,9 @@ void parallel(c_res *s, int d, int a) {
   /* start working */
   worker();
 
-  DO SOME REALLY REALLY IMPORTANT STUFF HERE
+  /* return results */ 
+  *s = cj->s;
+  free(cj);
   }
 
 /* initialization function */

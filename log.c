@@ -40,6 +40,7 @@ void die(char *fmt, ...) {
   if (fmt) {
     va_list ap;
     logheader();
+    va_start(ap,fmt);
     fputs("Fatal: ",log);
     vfprintf(log,fmt,ap);
     va_end(ap);
