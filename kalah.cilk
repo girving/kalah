@@ -41,7 +41,7 @@ void usage() {
 cilk int main(int argc, char **argv) {
   char o;
   int guess, game = 0, verbose = 0;
-  int flags = 0, hashsize = 0, endgamesize = 0;
+  int flags = 0, hashsize = 0, endgamesize = -1;
   char *hashfile = 0;
   char *endgamefile = "endgame.dat";
 
@@ -67,7 +67,7 @@ cilk int main(int argc, char **argv) {
       case 'E': endgamefile = optarg; break;
       default: usage();
       }
-  if (!hashsize || !endgamesize || argc - optind < 1 || strlen(argv[optind]) != 1)
+  if (!hashsize || endgamesize < 0 || argc - optind < 1 || strlen(argv[optind]) != 1)
     usage();
 
   /* parse initial position arguments */
@@ -90,6 +90,7 @@ cilk int main(int argc, char **argv) {
   init_stat();
 
   p.s = 0;
+  p.w = -1;
   r = guess;
   m = moves;
   write_pq(stdout,p);

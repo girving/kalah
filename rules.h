@@ -30,6 +30,7 @@ static inline int o_rate(position *p) { return a_rate(p,!p->s); }
 static inline int bin(position *p, int b) { return a_bin(p,p->s,b); }
 static inline int o_bin(position *p, int b) { return a_bin(p,!p->s,b); }
 
+extern int pos_strcmp(position p, char *s);
 extern void write_pq(FILE *f, position p);
 extern void write_p(FILE *f, position p, int s);
 

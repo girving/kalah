@@ -8,87 +8,79 @@
 #include "rules.h"
 #include "endgame.h"
 
-long long si[100], ai[100]; 
-long stones, crunched, saved;
+char *file = "endgame.dat";
+long long ai[50][50],bi[50],ci[LPIT][50]; 
+int stones, saved, maxval;
+long long size, crunched;
 endgame *eg;
  
 void create() {
-  FILE* f = fopen("endgame.dat","w");
-  int i = 0;
-  long l = 0;
-  fwrite(&i,sizeof(int),1,f);
-  fwrite(&l,sizeof(long),1,f);
-  fclose(f);
-  }
-
-void initsize() {
-  int i,j;
-  long long ci[100];
-  ci[0] = 1;
-  for (j=1;j<100;j++)
-    ci[j] = ci[j-1] * (j+PITS-1) / j;
-        
-  si[0] = si[1] = 0;
-  ai[0] = ai[1] = 0;
-  for (i=2;i<100;i++) {
-    si[i] = 0; 
-    for (j=1;j<i;j++)
-      si[i] += ci[j] * ci[i-j];
-    if (si[i] & 1)
-      si[i]++;
-    si[i] >>= 1;
-    ai[i] = ai[i-1] + si[i];
+  if (access(file,F_OK)) {
+    int b;
+    printf("Creating null endgame database:\n");
+    printf("  Enter bits per element: ");
+    scanf("%d",&b);
+    eg_create(file,b);
     }
   }
 
-void setup() {
-  int i;
+void load(int n) {
   FILE *f;
-  if (access("endgame.dat",F_OK))
-    create();
-  f = fopen("endgame.dat","r");  
-  eg = (endgame*) malloc(sizeof(endgame));
-  read_endgame(eg,f,40);
-  fclose(f);
-  stones = saved = eg->n;
-  crunched = eg->size * 2;
-  initsize();
+  endgame_header h;
+  if (n > stones) {
+    printf("Loading endgame database to %d stones...",n);
+    fflush(stdout);
+    if (stones >= 0)
+      free_endgame(eg);
+    f = fopen(file,"r");
+    fread(&h,sizeof(endgame_header),1,f);
+    fseek(f,0,SEEK_SET);
+    read_endgame(eg,f,n);
+    fclose(f);
+    saved = h.n;
+    size = h.size;
+    stones = eg->n;
+    maxval = eg_maxval(eg);
+    printf("done\n");
+    }
   }
 
 void save() {
-  FILE *f;
-  if (stones == saved)
-    return;
-  f = fopen("endgame.dat","w");
-  write_endgame(eg,f); 
-  fclose(f);
+  if (stones > saved) {
+    FILE *f = fopen(file,"w");
+    printf("Saving endgame database...");
+    fflush(stdout);
+    write_endgame(eg,f); 
+    fclose(f);
+    saved = stones;
+    printf("done\n");
+    }
   }
 
 void info(int v) {
   int i,j,s;
-  int h[32];
   if (!v) {
-    for (i=0;i<32;i++)
-      h[i] = 0;
-    for (i=1;i<=eg->n;i++)
-      for (j=eg->di[i][1];j<eg->di[i][i];j++)
-        h[eg_getd(eg,j)]++;
-
     printf("Database info:\n");
-    printf("  Stones: %ld\n",stones);
-    printf("  Size:   %ld\n",eg->size);
-    printf("  Done:   %ld\n",crunched);
-
-    printf("Frequency:\n");
-    for (i=0;i<32;i++)
-      if (h[i])
-        printf("  %2d) %d\n",i,h[i]);
+    printf("  Stones:  %d\n",saved);
+    printf("  Loaded:  %d\n",stones);
+    printf("  Bits:    %d\n",eg->bits);
+    printf("  Maxval:  %d\n",maxval);
+    printf("  Size:    %ld\n",size);
+    printf("  Entries: %ld\n",size * 8 / eg->bits);
+    printf("  Nodes:   %lld\n",crunched);
     putchar('\n');
     }
+  else if (v > 40)
+    printf("Too many stones\n");
   else {
+    long long a1,a2;
     printf("Table sizes:\n");
-    for (i=2;i<=v;i++)
-      printf("  %2d) %9lld, %9lld\n",i,si[i],ai[i]);
+    for (i=2;i<=v;i++) {
+      a1 = ai[i][i] >> 3;
+      a2 = ai[i][1] >> 3;
+      printf("  %2d) %10lld, %10lld  /  %10lld, %10lld\n",i,(a1-a2)*4,a1*4,
+                                                            (a1-a2)*5,a1*5);
+      }
     putchar('\n');
     }
   }
@@ -104,10 +96,11 @@ void test() {
     s += k;
     }
   s -= p.a[PITS] + p.a[LPIT];
-  if (s > stones) {
-    printf("Too many total stones.\n");
+  if (s > saved && s > stones) {
+    printf("Too many total stones: %d > %d\n",s,saved > stones ? saved : stones);
     return;
     }
+  load(s);
   printf("Index: %ld\n",eg_index(eg,s,&p));
   printf("Entry: %d\n",eg_getd(eg,eg_index(eg,s,&p)));
   i = eg_lookup(eg,s,&p,&k);
@@ -117,58 +110,64 @@ void test() {
     printf("Rate:  %d+\n",i);
   }
 
-int crunch(int n, unsigned long l, position *p) {
-  int i,s,v,r,k,e;
+int crunch(int n, size_t l, position *p) {
+  int i,s,v,r,e,cn;
+  size_t k;
   position t;
   v = 1;
-  p->a[LPIT] = p->a[PITS] = 0;  
+  p->a[LPIT] = p->a[PITS] = 0;
   for (i=0;i<PITS;i++)
     if (bin(p,i)) {
       t = *p;    
       s = p->s;
       e = move(&t,i); 
-      r = a_bin(p,s,PITS);
-      if (t.w == -1) {
-        k = eg_index(eg,n-r,&t);
+      r = a_bin(&t,s,PITS);
+      if (t.w < 0) {
+        cn = n - t.a[PITS] - t.a[LPIT];
+        k = eg_index(eg,cn,&t);
         s = eg_getd(eg,k);
-        if (s == 15) {
-          s = crunch(n-r,k,&t);
+        if (s == maxval) {
+          s = crunch(cn,k,&t);
           r = e ? r + s : n - s;
           }
         else
           r = e ? r + s + 1 : n - s - 1;
         }
-      if (r > v)
+      if (v < r)
         v = r;
       }
-  eg_setd(eg,l,v);
+  r = v-1;
+  if (r > maxval) r = maxval;
+  eg_setd(eg,l,r);
   crunched++;
   return v;
   }
 
 void complete(int n) {
   position p;            
-  FILE* f;
-  int i,j,k;
-
+  long long temp;
+  int i,j;
+  size_t k;
+  if (n <= saved) {
+    printf("Already computed\n");
+    return;
+    }
   p.s = 0;
   fill_pos(&p,0);
 
-  if (n <= eg->n) 
-    return;
-  free(eg->d);
-  eg->d = (unsigned char*) malloc(eg->ai[n][n] >> 1);
-  f = fopen("endgame.dat","r");  
-  fseek(f,sizeof(int)+sizeof(long),SEEK_CUR);
-  fread(eg->d,sizeof(char),eg->size,f);
-  fclose(f);
-  for (i=eg->size;i<eg->ai[n][n] >> 1;i++)
-    eg->d[i] = 255;
-  printf("s = %ld, a = %lld\n",eg->size,eg->ai[n][n]); 
-  eg->size = eg->ai[n][n] >> 1;
+  save();
+  load(saved);
+  size = eg->ai[n][n] * eg->bits / 8;
+  printf("Allocating memory for %d stones...",n);
+  fflush(stdout);
+  eg->d = realloc(eg->d,size);
+  memset(eg->d+eg->size, 255, size - eg->size);
+  printf("done\n");
+  eg->n = n;
+  eg->size = size;
 
-  for (i=eg->n+1;i<=n;i++) {
-    printf("%d) ",i);
+  for (i=stones+1;i<=n;i++) {
+    printf("%2d) ",i);
     fflush(stdout);
     for (j=1;j<i;j++) {
       p.a[PITS-1] = j;  
@@ -176,7 +175,8 @@ void complete(int n) {
         p.a[LPIT-1] = i-j;
         for (;;) {
           k = eg_index(eg,i,&p);
-          if (eg_getd(eg,k) == 15)
+          temp++;
+          if (eg_getd(eg,k) == maxval)
             crunch(i,k,&p);
           k = LPIT-1;
           while (!p.a[k]) k--;
@@ -209,16 +209,24 @@ void complete(int n) {
       }
     putchar('\n');
     }
-  eg->n = stones = n;
+  stones = n;
   }
           
-int main() {
+int main(int argc, char **argv) {
   char c[10] = "h";
   int v;
+  eg = malloc(sizeof(endgame));
+  eg_init_long_tables(ai,bi,ci);
+  crunched = 0;
+  stones = saved = -1;
+  if (argc == 2)
+    file = argv[1];
+  create();
+  load(0);
 
-  setup();
-  
   for (;;) {
+    if (index("tc",*c))
+      scanf("%d",&v);
     switch (*c) {
       case 'h': printf("Commands:\n");
                 printf("  h   - help\n");
@@ -227,35 +235,21 @@ int main() {
                 printf("  r   - lookup a position's rate\n");
                 printf("  c n - complete table to n stones\n"); 
                 printf("  s   - save database\n");
-                printf("  e   - exit\n\n");
+                printf("  q   - exit\n\n");
                 break;
 
-      case 'i': info(0); 
-                break;
+      case 'i': info(0); break;
+      case 'r': test(); break;
+      case 's': save(); break;
+      case 't': info(v); break;
+      case 'c': complete(v); break;
 
-      case 't': scanf("%d",&v);
-                info(v);
-                break;
- 
-      case 'r': test();
-                break;
-
-      case 'c': scanf("%d",&v);
-                if (v > stones) {
-                  save();
-                  complete(v);
-                  }
-                else
-                  printf("Already computed.\n");
-                break;
-
-      case 's': save();
-                break;
-
-      case 'q': 
+      case 'q':
       case 'e': save();
                 free_endgame(eg);
                 return 0;
+
+      default: printf("Invalid command\n"); 
       }
     printf("> ");
     scanf("%s",&c);

@@ -19,8 +19,8 @@ kalah-s: kalah-s.o crunch-s.o hash-s.o endgame.o rules.o
 generator: generator.o rules.o endgame.o
 	gcc $(CFLAGS) -o generator generator.o rules.o endgame.o
 
-twiddle: twiddle.o rules.o
-	gcc $(CFLAGS) -o twiddle twiddle.o rules.o
+twiddle: twiddle.o rules.o endgame.o
+	gcc $(CFLAGS) -o twiddle twiddle.o rules.o endgame.o
 
 
 kalah.o: $(HDR) crunch.cilkh kalah.cilk

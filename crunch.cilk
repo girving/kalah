@@ -253,7 +253,6 @@ cilk int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
   char cm[MAXMVC];
   Cilk_time start;
   double elapsed;
-  double t_s, t_e;
   int r = g;
   int lo = -1000;
   int hi = 1000;

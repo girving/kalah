@@ -122,6 +122,17 @@ extern int move(position *ps, register int i) {
   return i;
   }
 
+int pos_strcmp(position p, char *s) {
+  int i;
+  for (i=0;i<=PITS;i++)
+    if (strtol(s,&s,0) != bin(&p,i)) 
+      return 0;
+  for (i=0;i<=PITS;i++)
+    if (strtol(s,&s,0) != o_bin(&p,i)) 
+      return 0;
+  return 1;
+  }
+
 void write_pq(FILE *f, position p) {
   int i;
   for (i=0;i<=PITS;i++)
