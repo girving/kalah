@@ -9,11 +9,15 @@ endgame* eg = 0;
 
 int stones = 0; 
 int calldepth;
+int fulldepth;
 stat_t stat;
 
 void init_stat() {
-  memset(&stat,0,sizeof(stat));
+  memset(&stat,0,sizeof(stat_t));
   }
+
+void free_stat() {}
+void update_stat() {}
 
 void format_elapsed(char *s, double dt) {
   long t;
@@ -38,6 +42,7 @@ void format_elapsed(char *s, double dt) {
 
 void print_stat(FILE *f, char *p) {
   char t[50];
+  update_stat();
   format_elapsed(t,stat.elapsed);
   fprintf(f,"%sThinking time:    %s\n",p,t);
   fprintf(f,"%sMaximum depth:    %d\n",p,stat.maxdepth);
@@ -47,7 +52,7 @@ void print_stat(FILE *f, char *p) {
   fprintf(f,"%sHash cutoffs:     %lld\n",p,stat.ha_lookups);
   fprintf(f,"%sFutility cutoffs: %lld\n",p,stat.f_cutoffs);
   fprintf(f,"%sEndgame lookups:  %lld\n",p,stat.eg_lookups);
-  fprintf(f,"%sNodes per second: %.lf\n",p,stat.nodes/stat.elapsed);
+  fprintf(f,"%sNodes per second: %.0f\n",p,stat.nodes/stat.elapsed);
   }
 
 static inline void smallsort(int n, int *r, c_res **v) {
@@ -98,7 +103,7 @@ static int peek(c_res *s, int d, int a) {
   if (r - k + 2 > a) {
     STAT(stat.f_cutoffs++);
     s->rd = 200;
-    return t;
+    return r - k + 2;
     }
   if (r + k <= a) {
     STAT(stat.f_cutoffs++);
@@ -127,21 +132,21 @@ static int peek(c_res *s, int d, int a) {
 
 /* Minimal-window fail-soft jamboree negamax search */
 cilk c_res* crunch(c_res* s, int d, int a) {
-  int i,r,n,tm,cutoff;
+  int i,r,n,tm,ed,cutoff;
 
   c_res c[PITS];
   c_res *o[PITS];
   int cr[PITS];
 
-  inlet void absorb(c_res *c) {
-    r = c->k ? c->r : -c->r;
-    if (++c->rd < s->rd)
-      s->rd = c->rd;
+  inlet void absorb(c_res *cs) {
+    r = cs->k ? cs->r : -cs->r;
+    if (++cs->rd < s->rd)
+      s->rd = cs->rd;
     if (s->r < r) {
       s->r = r;
-      *s->m = c->o + '0';
-      if (c->k)
-        strcpy(s->m+1,c->m);
+      s->m[0] = cs->o + '0';
+      if (cs->k && 0)
+        strcpy(s->m+1,cs->m);
       else
         s->m[1] = 0;
       if (s->r > a) {
@@ -157,8 +162,8 @@ cilk c_res* crunch(c_res* s, int d, int a) {
 
   /* peek at all children and construct move ordering */
   n = 0;
-  if (d < 200)
-    d--;
+  d--;
+  ed = fulldepth ? 200 : d;
   s->rd = 250;
   s->r = SCHAR_MIN;
   cutoff = 0;
@@ -167,13 +172,13 @@ cilk c_res* crunch(c_res* s, int d, int a) {
     if (bin(s->p,i)) {
       c[i].p = s->p;
       c[i].k = move(&c[i].p,i);
-      r = c[i].k ?  peek(c+i,d,a) : -peek(c+i,d,-a-1);
+      r = c[i].k ?  peek(c+i,ed,a) : -peek(c+i,ed,-a-1);
       if (++c[i].rd > 0) {    // peek sucessful
         if (c[i].rd < s->rd)
           s->rd = c[i].rd;
         if (s->r < r) {
           s->r = r;
-          *s->m = i + '0'; 
+          s->m[0] = i + '0'; 
           s->m[1] = 0;
           if (s->r > a) {
             STAT(stat.cutoffs++);
@@ -235,6 +240,14 @@ cilk c_res* crunch(c_res* s, int d, int a) {
   if (s->rd > LOWDEPTH && (!s->da.t || s->rd >= s->da.d)) 
     da_seta(&s->da, s->rd, *s->m-'0', s->r, s->r > a ? DV_LO : DV_HI);
 
+/*  if (d > 397) {
+    for (i=200;i>d;i--)
+      putchar('*');
+    printf(" d %d, s %d, o %d, a %d, r %d, m %s, rd %d, p ",d+1,s->p.s,s->o,a,s->r,s->m,s->rd);   
+    write_pq(stdout,s->p);
+    }
+*/
+
   return s;
   }
 
@@ -244,12 +257,13 @@ cilk int toplevel(char *m, position *p, int d, int *rd, int a) {
   c_res *sp;
 
   STAT(calldepth = d);
+  fulldepth = d >= 200 ? 1 : 0;
 
   /* transposition table check */
   ha_lookup(ha,&s.da,p);
   if (s.da.t && s.da.d >= d &&
-         (s.da.t == DV_LO && s.da.r > a ||
-          s.da.t == DV_HI && s.da.r <= a)) {
+         ((s.da.t == DV_LO && s.da.r > a) ||
+          (s.da.t == DV_HI && s.da.r <= a))) {
     STAT(stat.ha_lookups++);
     *rd = s.da.d;
     *m = s.da.m + '0';
@@ -281,6 +295,8 @@ cilk int mtdf(char *m, position *p, int d, int *rd, int g, int f) {
   int lo = -1000;
   int hi = 1000;
   *rd = 250;
+  m[0] = '?'; 
+  m[1] = 0;
   if (f & SF_VERBOSE) 
     printf("MTD(f): d %d, g %d, t %f\n",d,g,stat.elapsed);
 

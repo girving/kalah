@@ -82,7 +82,7 @@ static inline int eg_lookup(endgame *e, int t, position *p, int *q) {
 
 static inline void eg_setd_4(endgame *e, size_t i, int v) {
   if (v > 15) v = 15;
-  e->d[i>>1] = i&1 ? e->d[i>>1] & 15 | (v << 4) : e->d[i>>1] & 240 | v;
+  e->d[i>>1] = i&1 ? (e->d[i>>1] & 15) | (v << 4) : (e->d[i>>1] & 240) | v;
   }
 
 static inline void eg_setd_5(endgame *e, size_t i, int v) {
@@ -90,7 +90,7 @@ static inline void eg_setd_5(endgame *e, size_t i, int v) {
   int r;
   i *= 5;
   q = e->d + (i>>3);
-  r = (*q | *(q+1)<<8) & ~(31 << (i&7)) | v << (i&7);
+  r = ((*q | (*(q+1)<<8)) & ~(31 << (i&7))) | (v << (i&7));
   *q = r;
   *(q+1) = r>>8;
   }

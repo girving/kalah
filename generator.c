@@ -58,15 +58,15 @@ void save() {
   }
 
 void info(int v) {
-  int i,j,s;
+  int i;
   if (!v) {
     printf("Database info:\n");
     printf("  Saved:   %d\n",saved);
     printf("  Loaded:  %d\n",stones);
     printf("  Bits:    %d\n",eg->bits);
     printf("  Maxval:  %d\n",maxval);
-    printf("  Size:    %ld\n",size);
-    printf("  Entries: %ld\n",size * 8 / eg->bits);
+    printf("  Size:    %lld\n",size);
+    printf("  Entries: %lld\n",size * 8 / eg->bits);
     printf("  Nodes:   %lld\n",crunched);
     putchar('\n');
     }
@@ -101,7 +101,7 @@ void test() {
     return;
     }
   load(s);
-  printf("Index: %ld\n",eg_index(eg,s,&p));
+  printf("Index: %ld\n",(long) eg_index(eg,s,&p));
   printf("Entry: %d\n",eg_getd(eg,eg_index(eg,s,&p)));
   i = eg_lookup(eg,s,&p,&k);
   if (k == EG_EXACT)
@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
       default: printf("Invalid command\n"); 
       }
     printf("> ");
-    scanf("%s",&c);
+    scanf("%s",c);
     }
   }
        

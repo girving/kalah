@@ -40,7 +40,7 @@ void usage() {
 
 cilk int main(int argc, char **argv) {
   char o;
-  int guess, game = 0, verbose = 0;
+  int guess = 0, game = 0, verbose = 0;
   int flags = 0, hashsize = 0, endgamesize = -1;
   char *hashfile = 0;
   char *endgamefile = "endgame.dat";
@@ -55,7 +55,7 @@ cilk int main(int argc, char **argv) {
   while ((o = getopt(argc,argv,"hd:r:jlgvVt:e:T:E:")) != -1)
     switch (o) {
       case 'd': d = atoi(optarg); break;
-      case 'r': guess = atoi(optarg); break;
+      case 'r': guess = atoi(optarg); flags |= SF_GUESS; break;
       case 'j': flags |= SF_JUMP; break;
       case 'l': flags |= SF_SINGLE; break;
       case 'g': game = 1; break;
@@ -120,6 +120,7 @@ cilk int main(int argc, char **argv) {
 
   print_stat(stdout,"");
   save_hash(hashfile);
+  free_stat();
   return 0;
   }
 

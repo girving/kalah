@@ -168,7 +168,6 @@ int main(int argc, char **argv) {
   int verbose = 0;
   int stones = 0;
   int bits = 0;
-  int s;
   position p;
   p.s = 0;
   

@@ -26,7 +26,9 @@ void create_hash(hash *h, int bitsize) {
   }
 
 void read_hash(hash *h, FILE *f) {
+#ifdef LOCKING
   int i;
+#endif
   hash_header hh;
   fread(&hh,sizeof(hash_header),1,f);
   if (memcmp(hh.sig,ha_sig,2)) {

@@ -19,6 +19,10 @@
 #define inlet
 #define abort
 
+/* handle global variables */
+#define Cilk_active_size 1
+#define Self 0
+
 /* handle timers */
 #include <sys/time.h>
 typedef double Cilk_time;

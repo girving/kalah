@@ -50,6 +50,7 @@ typedef struct __stat_t {
 extern stat_t stat;
 extern void init_stat();
 extern void print_stat(FILE *f, char *p);
+extern void free_stat();
 
 /* Internal crunch parameter structure */
 typedef struct __c_res {
