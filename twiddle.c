@@ -98,8 +98,8 @@ void trialmoves(position p, int verbose) {
 void reduce_endgame(int n, int b, char *sfile, char *dfile) {
   FILE *s, *d;
   int i;
-  endgame e,e2;
-  endgame_header h,nh;
+  struct endgame e2;
+  struct endgame_header h,nh;
   unsigned char buf[BLOCK];
   int block;
   if (!n && !b) {
@@ -116,35 +116,35 @@ void reduce_endgame(int n, int b, char *sfile, char *dfile) {
     fprintf(stderr,"Failed to open files\n");
     return;
     }
-  fread(&h,sizeof(endgame_header),1,s);
-  e.n = atoi(h.n);
-  e.bits = atoi(h.bits);
-  e.size = strtoul(h.size,NULL,0);
-  if (e.n < n || e.bits < b) {
+  fread(&h,sizeof(struct endgame_header),1,s);
+  eg.n = atoi(h.n);
+  eg.bits = atoi(h.bits);
+  eg.size = strtoul(h.size,NULL,0);
+  if (eg.n < n || eg.bits < b) {
     fprintf(stderr,"Cannot create new endgame data\n");
     return;
     }
 
-  eg_init_tables(&e);
-  e.d = e2.d = buf;
+  eg_init_tables();
+  eg.d = e2.d = buf;
   nh = h;
-  if (b && e.bits > b)
+  if (b && eg.bits > b)
     sprintf(nh.bits,"%-4d",b);
   e2.bits = atoi(nh.bits);
-  if (n && e.n > n)
+  if (n && eg.n > n)
     sprintf(nh.n,"%-4d",n);
   e2.n = atoi(nh.n);
-  sprintf(nh.size,"%-19lld",(long long) e.ai[e2.n][e2.n] * e2.bits / 8);
-  fwrite(&nh,sizeof(endgame_header),1,d);
+  sprintf(nh.size,"%-19lld",(long long) eg.ai[e2.n][e2.n] * e2.bits / 8);
+  fwrite(&nh,sizeof(struct endgame_header),1,d);
   
-  while (e.size) {
-    block = e.size > BLOCK ? BLOCK : e.size;
-    e.size -= block;
+  while (eg.size) {
+    block = eg.size > BLOCK ? BLOCK : eg.size;
+    eg.size -= block;
     fread(buf,1,block,s);
-    if (e.bits != e2.bits)
-      for (i=0;i<block*8/e.bits;i++)
-        eg_setd(&e2,i,eg_getd(&e,i)); 
-    fwrite(buf,1,block*e2.bits/e.bits,d);
+    if (eg.bits != e2.bits)
+      for (i=0;i<block*8/eg.bits;i++)
+        eg_setd_explicit(&e2,i,eg_getd(i)); 
+    fwrite(buf,1,block*e2.bits/eg.bits,d);
     }
   fclose(s);
   fclose(d);

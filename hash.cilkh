@@ -66,7 +66,7 @@ extern void da_seta(datumaccess *da, int d, int m, int r, int t);
 static inline void da_verify(datumaccess *d);
 
 
-typedef struct __hash {
+struct hash {
   int bits;        // logarithmic size of hash table 
   size_t size;     // size of hash table (2^bits)
   size_t entries;  // number of entries 
@@ -75,22 +75,24 @@ typedef struct __hash {
   Cilk_lockvar l[LOCKSIZE];
 #endif
   datum *d;        // hash table 
-  } hash;
+  };
 
-typedef struct __hash_header {
+struct hash_header {
   char sig[2];
   int bits;
   size_t size;
   size_t entries;
-  } hash_header;
+  };
 
-extern void create_hash(hash *h, int bitsize);
-extern void read_hash(hash *h, FILE *f);
-extern void write_hash(hash *h, FILE *f);
-extern void free_hash(hash *h);
+extern struct hash ha;
 
-extern void setstale(hash *h);
-extern void ha_lookup(hash *h, datumaccess *da, position *p);
+extern void create_hash(int bitsize);
+extern void read_hash(FILE *f);
+extern void write_hash(FILE *f);
+extern void free_hash();
+
+extern void setstale();
+extern void ha_lookup(datumaccess *da, position *p);
 
 
 /* inline code */

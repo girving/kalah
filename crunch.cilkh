@@ -36,8 +36,6 @@
 
 /* global variables */
 extern int stones; 
-extern hash* ha;     
-extern endgame* eg; 
 
 /* Job statistics */
 typedef struct __stat_t {

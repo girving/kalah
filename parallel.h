@@ -101,7 +101,7 @@ inline void P_CHECK() {
 
 /* initialization and destruction */
 extern void init_parallel(int m);   // m = 1 for master, 0 otherwise
-extern void close_parallel();
+extern void close_parallel(void);
 
 /* main functions */
 extern void parallel(c_res* s, int d, int a);   // master

@@ -4,9 +4,6 @@
 
 #include "crunch.cilkh"
 
-hash* ha = 0;    
-endgame* eg = 0; 
-
 int stones = 0; 
 int calldepth;
 int fulldepth;
@@ -88,9 +85,9 @@ static int peek(c_res *s, int d, int a) {
   k = stones - s->p.a[LPIT] - s->p.a[PITS];
  
   /* endgame database */
-  if (eg_known(eg,k)) {
+  if (eg_known(k)) {
     STAT(stat.eg_lookups++);
-    r = eg_lookup(eg,k,&s->p,&t);
+    r = eg_lookup(k,&s->p,&t);
     if (t == EG_EXACT || r > a) { 
       s->rd = 200; 
       return r;
@@ -112,7 +109,7 @@ static int peek(c_res *s, int d, int a) {
     }
 
   /* transposition table */ 
-  ha_lookup(ha,&s->da,&s->p);
+  ha_lookup(&s->da,&s->p);
   if (s->da.t && s->da.d >= d && (s->da.t == DV_LO ? s->da.r > a : s->da.r <= a)) {
     STAT(stat.ha_lookups++);
     s->rd = s->da.d;
@@ -260,7 +257,7 @@ cilk int toplevel(char *m, position *p, int d, int *rd, int a) {
   fulldepth = d >= 200 ? 1 : 0;
 
   /* transposition table check */
-  ha_lookup(ha,&s.da,p);
+  ha_lookup(&s.da,p);
   if (s.da.t && s.da.d >= d &&
          ((s.da.t == DV_LO && s.da.r > a) ||
           (s.da.t == DV_HI && s.da.r <= a))) {
@@ -358,7 +355,7 @@ cilk int solve(char *m, position p, int d, int *rd, int g, int f) {
       }
     }
 
-  if (f & SF_STALE) setstale(ha);
+  if (f & SF_STALE) setstale();
 
   return r;
   }
@@ -367,12 +364,11 @@ cilk int solve(char *m, position p, int d, int *rd, int g, int f) {
 /* Miscellaneous functions */
 
 void init_hash(int size, char *file) {
-  ha = (hash*) malloc(sizeof(hash));
   if (!file || access(file,F_OK))   // hash file doesn't exist
-    create_hash(ha,size);
+    create_hash(size);
   else {
     FILE *f = fopen(file,"r");
-    read_hash(ha,f);
+    read_hash(f);
     fclose(f);
     }
   } 
@@ -380,21 +376,19 @@ void init_hash(int size, char *file) {
 void save_hash(char *file) {
   if (file) {
     FILE *f = fopen(file,"w");
-    write_hash(ha,f);
+    write_hash(f);
     fclose(f);
     }
   }
 
 void close_hash() {
-  free_hash(ha);
-  free(ha);
+  free_hash();
   }
 
 void init_endgame(int size, char *file) {
   if (!access(file,F_OK)) {          // endgame database exists
     FILE *f = fopen(file,"r");
-    eg = (endgame*) malloc(sizeof(endgame));
-    read_endgame(eg,f,size);
+    read_endgame(f,size);
     fclose(f);
     }
   else {
@@ -404,6 +398,5 @@ void init_endgame(int size, char *file) {
   }
 
 void close_endgame() {
-  free_endgame(eg);
-  free(eg);
+  free_endgame();
   }

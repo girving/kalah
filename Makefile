@@ -5,7 +5,7 @@
 CC = gcc
 CILK = cilk
 CFLAGS = -O3 -funroll-loops -Winline -Wall
-CILKFLAGS = $(CFLAGS)# -cilk-profile -cilk-critical-path
+CILKFLAGS = $(CFLAGS) -cilk-profile -cilk-critical-path
 
 ELIDE = -DNOCILK -x c
 

@@ -6,6 +6,8 @@
 
 char eg_sig[] = "eg";
 
+struct endgame eg;
+
 #define INIT_TABLE_MACRO(a,b,c,n)				\
   int i,j;							\
   for (i=0;i<PITS-1;i++) {					\
@@ -27,8 +29,8 @@ char eg_sig[] = "eg";
       a[i][i] = (a[i][i] & ~7) + 8;				\
     }
 
-void eg_init_tables(endgame *e) {
-  INIT_TABLE_MACRO(e->ai,e->bi,e->ci,40)
+void eg_init_tables() {
+  INIT_TABLE_MACRO(eg.ai,eg.bi,eg.ci,40)
   }
 
 void eg_init_long_tables(long long a[][100], long long b[], long long c[][100]) {
@@ -37,66 +39,66 @@ void eg_init_long_tables(long long a[][100], long long b[], long long c[][100]) 
 
 void eg_create(char *file, int bits) {
   FILE* f = fopen(file,"w");
-  endgame_header h;
+  struct endgame_header h;
   memcpy(h.sig,eg_sig,2);
   strcpy(h.n,"0");
   strcpy(h.size,"0");
   sprintf(h.bits,"%d",bits);
-  fwrite(&h,sizeof(endgame_header),1,f);
+  fwrite(&h,sizeof(struct endgame_header),1,f);
   fclose(f);
   }
     
-void read_endgame(endgame *e, FILE *f, int n) {
-  endgame_header h;
-  eg_init_tables(e);
-  fread(&h,sizeof(endgame_header),1,f);
+void read_endgame(FILE *f, int n) {
+  struct endgame_header h;
+  eg_init_tables();
+  fread(&h,sizeof(struct endgame_header),1,f);
   if (memcmp(h.sig,eg_sig,2)) {
     fprintf(stderr,"Corrupt endgame database\n");
     exit(-1);
     }
-  e->n = atoi(h.n);
-  e->bits = atoi(h.bits);
-  e->size = strtoul(h.size,NULL,0);
-  if (e->size != e->ai[e->n][e->n]*e->bits>>3) {
+  eg.n = atoi(h.n);
+  eg.bits = atoi(h.bits);
+  eg.size = strtoul(h.size,NULL,0);
+  if (eg.size != eg.ai[eg.n][eg.n]*eg.bits>>3) {
     fprintf(stderr,"Corrupt endgame database\n");
     exit(-1);
     }
 
-  if (e->n > n) e->n = n;
-  e->size = e->ai[e->n][e->n] * e->bits >> 3;
-  e->d = malloc(e->size);
-  fread(e->d,sizeof(char),e->size,f);
+  if (eg.n > n) eg.n = n;
+  eg.size = eg.ai[eg.n][eg.n] * eg.bits >> 3;
+  eg.d = malloc(eg.size);
+  fread(eg.d,sizeof(char),eg.size,f);
   }
  
-void write_endgame(endgame *e, FILE *f) {
-  endgame_header h;
+void write_endgame(FILE *f) {
+  struct endgame_header h;
   memcpy(h.sig,eg_sig,2);
-  sprintf(h.n,"%-4d",e->n);
-  sprintf(h.bits,"%-4d",e->bits);
-  sprintf(h.size,"%-19lld",(long long)e->size);
-  fwrite(&h,sizeof(endgame_header),1,f);
-  fwrite(e->d,sizeof(char),e->size,f);
+  sprintf(h.n,"%-4d",eg.n);
+  sprintf(h.bits,"%-4d",eg.bits);
+  sprintf(h.size,"%-19lld",(long long)eg.size);
+  fwrite(&h,sizeof(struct endgame_header),1,f);
+  fwrite(eg.d,sizeof(char),eg.size,f);
   }
  
-void free_endgame(endgame *e) {
-  free(e->d);  
+void free_endgame() {
+  free(eg.d);  
   }
 
-size_t eg_index(endgame *e, int t, position *p) {
+size_t eg_index(int t, position *p) {
   register int i,k;
   register size_t r;
   if (p->s) {
     r = 0; 
     k = p->a[PITS+1];
     for (i=PITS+1;i<LPIT-1;) {
-      r += e->ci[i][k];
+      r += eg.ci[i][k];
       k += p->a[++i];
       }
-    r = r * e->bi[t-k] + e->ai[t][k];
+    r = r * eg.bi[t-k] + eg.ai[t][k];
     k = 0;
     for (i=0;i<PITS-1;i++) {
       k += p->a[i];
-      r += e->ci[i][k];
+      r += eg.ci[i][k];
       }
     return r; 
     }
@@ -104,14 +106,14 @@ size_t eg_index(endgame *e, int t, position *p) {
     r = 0;
     k = p->a[0];
     for (i=0;i<PITS-1;) {
-      r += e->ci[i][k];
+      r += eg.ci[i][k];
       k += p->a[++i];
       }
-    r = r * e->bi[t-k] + e->ai[t][k];
+    r = r * eg.bi[t-k] + eg.ai[t][k];
     k = 0;
     for (i=PITS+1;i<LPIT-1;i++) {
       k += p->a[i];
-      r += e->ci[i][k];
+      r += eg.ci[i][k];
       }
     return r;
     }

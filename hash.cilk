@@ -10,70 +10,72 @@
 
 char ha_sig[] = "ha";
 
-void create_hash(hash *h, int bitsize) {
+struct hash ha;
+
+void create_hash(int bitsize) {
   int i;
-  h->bits = bitsize;
-  h->size = hashsize(h->bits);
-  h->mask = hashmask(h->bits);
-  h->entries = 0;
-  h->d = (datum*) malloc(h->size * sizeof(datum));
-  for (i=0;i<h->size;i++)
-    h->d[i].f = 0;
+  ha.bits = bitsize;
+  ha.size = hashsize(ha.bits);
+  ha.mask = hashmask(ha.bits);
+  ha.entries = 0;
+  ha.d = (datum*) malloc(ha.size * sizeof(datum));
+  for (i=0;i<ha.size;i++)
+    ha.d[i].f = 0;
 #ifdef LOCKING
   for (i=0;i<LOCKSIZE;i++)
-    Cilk_lock_init(h->l[i]);
+    Cilk_lock_init(ha.l[i]);
 #endif
   }
 
-void read_hash(hash *h, FILE *f) {
+void read_hash(FILE *f) {
 #ifdef LOCKING
   int i;
 #endif
-  hash_header hh;
-  fread(&hh,sizeof(hash_header),1,f);
+  struct hash_header hh;
+  fread(&hh,sizeof(struct hash_header),1,f);
   if (memcmp(hh.sig,ha_sig,2)) {
     fprintf(stderr,"Corrupt hash file\n");
     exit(-1);
     }
 
-  h->bits = hh.bits;
-  h->size = hh.size;
-  h->entries = hh.entries;
-  h->mask = hh.size - 1;
+  ha.bits = hh.bits;
+  ha.size = hh.size;
+  ha.entries = hh.entries;
+  ha.mask = hh.size - 1;
 
-  h->d = malloc(h->size * sizeof(datum));
-  if (fread(h->d,sizeof(datum),h->size,f) != h->size)
+  ha.d = malloc(ha.size * sizeof(datum));
+  if (fread(ha.d,sizeof(datum),ha.size,f) != ha.size)
     exit(-1);
 
 #ifdef LOCKING
   for (i=0;i<LOCKSIZE;i++)
-    Cilk_lock_init(h->l[i]);
+    Cilk_lock_init(ha.l[i]);
 #endif
   }
 
-void write_hash(hash *h, FILE *f) {
-  hash_header hh;
+void write_hash(FILE *f) {
+  struct hash_header hh;
   memcpy(hh.sig,ha_sig,2);
-  hh.bits = h->bits;
-  hh.size = h->size;
-  hh.entries = h->entries;
-  fwrite(&hh,sizeof(hash_header),1,f);
-  fwrite(h->d,sizeof(datum),h->size,f);
+  hh.bits = ha.bits;
+  hh.size = ha.size;
+  hh.entries = ha.entries;
+  fwrite(&hh,sizeof(struct hash_header),1,f);
+  fwrite(ha.d,sizeof(datum),ha.size,f);
   }
 
-void free_hash(hash *h) {
-  free(h->d);
+void free_hash() {
+  free(ha.d);
   }
 
-extern void setstale(hash *h) {
+extern void setstale() {
   register datum *p, *e;
-  e = h->d + h->size;
-  for (p=h->d;p<e;p++)
+  e = ha.d + ha.size;
+  for (p=ha.d;p<e;p++)
     if (p->f)
       p->f |= D_STALE; 
   }
 
-void ha_lookup(hash *h, datumaccess *da, position *p) {
+void ha_lookup(datumaccess *da, position *p) {
   ub4 k;
 #if HASH == 64 || HASH == ZOBRIST
   register ub8 b;
@@ -115,9 +117,9 @@ void ha_lookup(hash *h, datumaccess *da, position *p) {
   k = mix32(a,b);
 #endif
 
-  da->c = h->d + (k & h->mask); 
+  da->c = ha.d + (k & ha.mask); 
 #ifdef LOCKING
-  da->l = h->l + (k & LOCKMASK);
+  da->l = ha.l + (k & LOCKMASK);
 #endif
   da->br = rate(*p);
   da->ko = 0;
