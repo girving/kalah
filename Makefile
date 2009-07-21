@@ -4,7 +4,7 @@
 
 CC = gcc
 CILK = cilk
-CFLAGS = -O3 -funroll-loops -Winline -Wall
+CFLAGS = -O3 -funroll-loops -Winline -Wall -fnested-functions
 CILKFLAGS = $(CFLAGS) #-cilk-profile -cilk-critical-path
 
 ELIDE = -DNOCILK -x c
@@ -22,9 +22,9 @@ progs = generator twiddle classify
 %: %.o $(obj)
 	$(CC) $(CFLAGS) -o $@ $^
 
-all: kalah kalah-s $(progs)
-cilk: kalah $(progs)
 serial: kalah-s $(progs)
+cilk: kalah $(progs)
+all: kalah kalah-s $(progs)
 
 kalah: kalah.o crunch.o hash.o $(obj)
 	$(CILK) $(CILKFLAGS) -o $@ $^

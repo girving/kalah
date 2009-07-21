@@ -42,7 +42,7 @@ void misc() {
   printf("  0xffffffff: %d\n",0xffffffff);
   printf("  UINT_MAX: %d\n",UINT_MAX);
   printf("  ULONG_MAX: %ld\n",ULONG_MAX);
-#define P_S(a) printf("  " #a ": %d\n",sizeof(a));
+#define P_S(a) printf("  " #a ": %ld\n",sizeof(a));
   printf("Data sizes:\n");
   P_S(int); P_S(position); P_S(datumaccess); P_S(c_res); 
   }
